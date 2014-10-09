@@ -12,9 +12,9 @@ def connected_component_labeling(image_path):
 	for row in range(height):
 		labels.append([])
 		for col in range(width):
-			pixel = image_data.getpixel((col, row))[0]
+			pixel = image_data.getpixel((col, row))
 
-			if pixel == 255:
+			if pixel == 0:
 				labels[row].append(0)
 			else:
 				up = label_up(row, col, labels)
@@ -27,10 +27,13 @@ def connected_component_labeling(image_path):
 				elif up != left and up > 0 and left > 0:
 					label = min(up, left)
 					labels[row].append(label)
-					if error_table[max(up, left)] == max(up, left):
-						error_table[max(up, left)] = label
+					
+					if up in error_table:
+						error_table[left] = error_table[up]
+					elif left in error_table:
+						error_table[up] = error_table[left]
 					else:
-						error_table = correct_error_table(error_table, max(up, left), label)
+						error_table[max(up, left)] = label
 				else:
 					labels[row].append(label_count)
 					error_table[label_count] = label_count
@@ -50,13 +53,17 @@ def label_left(row, col, labels):
 		return labels[row][col - 1]
 
 def correct_error_table(error_table, label, correct_label):
+	print 'correct', correct_label
+	print 'label', label
+	print 'error', error_table[label]
+	print 'type correct', type(error_table[label])
+	print 'type error', type(label)
+	print 'equal', (error_table[label] == label)
 	if error_table[label] == label:
 		error_table[label] = correct_label
 		return error_table
 	else:
-		old_label = error_table[label]
-		error_table[label] = correct_label
-		return correct_error_table(error_table, old_label, correct_label)
+		return correct_error_table(error_table, error_table[label], correct_label)
 
 def correct_error_label(error_table, label):
 	if error_table[label] == label:
@@ -71,7 +78,7 @@ def correct_labels(labels, error_table):
 				labels[row][col] = correct_error_label(error_table, labels[row][col])
 	return labels
 
-labels, error_table = connected_component_labeling('example.bmp')
+labels, error_table = connected_component_labeling('gun.bmp')
 corrected_labels = correct_labels(labels, error_table)
 
 print error_table
@@ -81,8 +88,8 @@ print error_table
 
 label_dictionary = {}
 for row in labels:
-	print row
+	# print row
 	for col in row:
 		label_dictionary[col] = True
 
-# print label_dictionary.keys()
+print label_dictionary.keys()
