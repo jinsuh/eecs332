@@ -27,7 +27,10 @@ def connected_component_labeling(image_path):
 				elif up != left and up > 0 and left > 0:
 					label = min(up, left)
 					labels[row].append(label)
-					error_table[max(up, left)] = label
+					if error_table[max(up, left)] == max(up, left):
+						error_table[max(up, left)] = label
+					else:
+						error_table = correct_error_table(error_table, max(up, left), label)
 				else:
 					labels[row].append(label_count)
 					error_table[label_count] = label_count
@@ -45,6 +48,15 @@ def label_left(row, col, labels):
 		return 0
 	else:
 		return labels[row][col - 1]
+
+def correct_error_table(error_table, label, correct_label):
+	if error_table[label] == label:
+		error_table[label] = correct_label
+		return error_table
+	else:
+		old_label = error_table[label]
+		error_table[label] = correct_label
+		return correct_error_table(error_table, old_label, correct_label)
 
 def correct_error_label(error_table, label):
 	if error_table[label] == label:
