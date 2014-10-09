@@ -7,12 +7,12 @@ def connected_component_labeling(image_path):
 
 	labels = []
 	label_count = 1
-	error_table = []
+	error_table = {}
 
 	for row in range(height):
 		labels.append([])
 		for col in range(width):
-			pixel = image_data.getpixel((col, row))
+			pixel = image_data.getpixel((col, row))[0]
 
 			if pixel == 255:
 				labels[row].append(0)
@@ -27,10 +27,10 @@ def connected_component_labeling(image_path):
 				elif up != left and up > 0 and left > 0:
 					label = min(up, left)
 					labels[row].append(label)
-					error_table[max(up, left) - 1] = label
+					error_table[max(up, left)] = label
 				else:
 					labels[row].append(label_count)
-					error_table.append(label_count)
+					error_table[label_count] = label_count
 					label_count = label_count + 1
 	return labels, error_table
 
@@ -46,21 +46,31 @@ def label_left(row, col, labels):
 	else:
 		return labels[row][col - 1]
 
-def correct_error_labels(error_table, label):
-	if label == 0:
-		return 0
-	elif error_table[label - 1] == label:
+def correct_error_label(error_table, label):
+	if error_table[label] == label:
 		return label
 	else:
-		return correct_error_labels(error_table, error_table[label - 1])
+		return correct_error_label(error_table, error_table[label])
 
 def correct_labels(labels, error_table):
 	for row in range(0, len(labels)):
 		for col in range(0, len(labels[row])):
-			labels[row][col] = correct_error_labels(error_table, labels[row][col])
+			if labels[row][col] > 0:
+				labels[row][col] = correct_error_label(error_table, labels[row][col])
 	return labels
 
-labels, error_table = connected_component_labeling('test.bmp')
+labels, error_table = connected_component_labeling('example.bmp')
 corrected_labels = correct_labels(labels, error_table)
-for row in corrected_labels:
+
+print error_table
+
+# for i in error_table:
+	# print i, error_table[i]
+
+label_dictionary = {}
+for row in labels:
 	print row
+	for col in row:
+		label_dictionary[col] = True
+
+# print label_dictionary.keys()
