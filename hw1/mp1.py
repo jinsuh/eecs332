@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 
-def ccl(image):
+def pass1(image):
 	image = Image.open(image)
 	imageData = image.getdata()
 	width, height = imageData.size
@@ -31,10 +31,8 @@ def ccl(image):
 					
 					if up in errorTable:
 						errorTable[left] = errorTable[up]
-					elif left in errorTable:
-						errorTable[up] = errorTable[left]
 					else:
-						errorTable[max(up, left)] = label
+						errorTable[up] = errorTable[left]
 				else:
 					labels[row].append(labelCount)
 					errorTable[labelCount] = labelCount
@@ -53,19 +51,6 @@ def labelLeft(row, col, labels):
 	else:
 		return labels[row][col - 1]
 
-def correctErrorTable(errorTable, label, correctLabel):
-	print 'correct', correctLabel
-	print 'label', label
-	print 'error', errorTable[label]
-	print 'type correct', type(errorTable[label])
-	print 'type error', type(label)
-	print 'equal', (errorTable[label] == label)
-	if errorTable[label] == label:
-		errorTable[label] = correctLabel
-		return errorTable
-	else:
-		return correctErrorTable(errorTable, errorTable[label], correctLabel)
-
 def correctLabel(errorTable, label):
 	if errorTable[label] == label:
 		return label
@@ -79,30 +64,60 @@ def correctLabels(labels, errorTable):
 		for col in range(0, len(labels[row])):
 			if labels[row][col] > 0:
 				correct = correctLabel(errorTable, labels[row][col])
-				print "correct", correct
-				print currLabel
+				# print "correct", correct
+				# print currLabel
 				if not correct in currLabel:
 					count += 1
 					currLabel[correct] = count	
 				labels[row][col] = currLabel[correct]
+	return labels, count
+
+def sizeFilter(labels, threshold):
+	currLabel = {}
+	for row in range(0, len(labels)):
+		for col in range(0, len(labels[row])):
+			l = labels[row][col]
+			if not l in currLabel:
+				currLabel[l] = 1
+			else:
+				currLabel[l] += 1
+	for row in range(0, len(labels)):
+		for col in range(0, len(labels[row])):
+			l = labels[row][col]
+			if l > 0:
+				count = currLabel[l]
+				if count < threshold:
+					labels[row][col] = 0
 	return labels
 
-labels, errorTable = ccl('face.bmp')
-correctedLabels = correctLabels(labels, errorTable)
+def ccl(image):
+	labels, errorTable = pass1(image)
+	correctedLabels, num = correctLabels(labels, errorTable)
+	numpyArr = (np.array(correctedLabels) * 255 / 6).astype(np.uint8)
+	im = Image.fromarray(numpyArr)
+	labelDict = {}
+	for row in correctedLabels:
+		for col in row:
+			labelDict[col] = True	
+	im.save('result' + image, 'bmp')
+	return correctedLabels, num
 
-numpyArr = (np.array(correctedLabels) * 255 / 6).astype(np.uint8)
+# Face
+finLabels, num = ccl('face.bmp')
+print num
+
+# Test
+finLabels, num = ccl('test.bmp')
+print num
+
+# Gun
+finLabels, num = ccl('gun.bmp')
+redoLabels= sizeFilter(finLabels, 500)
+numpyArr = (np.array(redoLabels) * 255 / 6).astype(np.uint8)
 im = Image.fromarray(numpyArr)
-im.save('result.bmp', 'bmp')
-
-# print errorTable
-
-# for i in errorTable:
-	# print i, errorTable[i]
-
+im.save('resultgun.bmp')
 labelDict = {}
-for row in labels:
-	# print row
+for row in redoLabels:
 	for col in row:
 		labelDict[col] = True
-
 print labelDict.keys()
