@@ -1,4 +1,5 @@
 from PIL import Image
+# import numpy as np
 
 def connected_component_labeling(image_path):
 	image = Image.open(image_path)
@@ -72,24 +73,26 @@ def correct_error_label(error_table, label):
 		return correct_error_label(error_table, error_table[label])
 
 def correct_labels(labels, error_table):
+	label_count = 1
+	label_map = {}
 	for row in range(0, len(labels)):
 		for col in range(0, len(labels[row])):
 			if labels[row][col] > 0:
-				labels[row][col] = correct_error_label(error_table, labels[row][col])
-	return labels
+				label = correct_error_label(error_table, labels[row][col])
 
-labels, error_table = connected_component_labeling('gun.bmp')
-corrected_labels = correct_labels(labels, error_table)
+				if not label in label_map:
+					label_map[label] = label_count
+					label_count = label_count + 1
 
-print error_table
+				labels[row][col] = label_map[label]
+	return labels, label_count - 1
 
-# for i in error_table:
-	# print i, error_table[i]
+def ccl(image_path):
+	labels, error_table = connected_component_labeling(image_path)
+	corrected_labels, label_count = correct_labels(labels, error_table)
+	return corrected_labels, label_count
 
-label_dictionary = {}
-for row in labels:
-	# print row
-	for col in row:
-		label_dictionary[col] = True
-
-print label_dictionary.keys()
+# labels, num = ccl('face.bmp')
+# image_array = (np.array(labels) * 255 / 6).astype(np.uint8)
+# image = Image.fromarray(image_array)
+# image.save('result.bmp', 'bmp')
