@@ -1,4 +1,5 @@
 from PIL import Image
+import numpy as np
 
 def read_image(image_path):
 	image = Image.open(image_path)
@@ -8,9 +9,22 @@ def read_image(image_path):
 def erosion(image, structure_element):
 	width, height = image.size
 
+	finArr = [[0 for x in xrange(width)] for x in xrange(height)]
+	flattened_elements= flatten_structure_element(structure_element)
 	for row in range(height):
 		for col in range(width):
-			pixel = image.getpixel((col, row))	
+			pixel = image.getpixel((col, row))
+			if pixel != 0:
+				isZero = False
+				for tup in flattened_elements:
+					if image.getpixel((col + tup[1], row + tup[0])) == 0:
+						isZero = True
+						finArr[row][col] = 0
+						break
+				if (not isZero):
+					finArr[row][col] = 1
+	return finArr
+
 
 def dilation(image, structure_element):
 	pass
@@ -37,5 +51,9 @@ def flatten_structure_element(structure_element):
 
 image = read_image('gun.bmp')
 structure_element = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
-print flatten_structure_element(structure_element)
-# erosion(image, structure_element)
+# print flatten_structure_element(structure_element)
+finalArr = erosion(image, structure_element)
+# print finalArr
+numpyArr = (np.array(finalArr) * 255).astype(np.uint8)
+im = Image.fromarray(numpyArr)
+im.save('result.bmp')
