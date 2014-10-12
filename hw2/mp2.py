@@ -32,7 +32,25 @@ def inBounds(row, col, tup, width, height):
 
 
 def dilation(image, structure_element):
-	pass
+	width, height = image.size
+
+	finArr = [[0 for x in xrange(width)] for x in xrange(height)]
+	flattened_elements= flatten_structure_element(structure_element)
+	for row in range(height):
+		for col in range(width):
+			pixel = image.getpixel((col, row))
+			if pixel != 0:
+				isZero = False
+				for tup in flattened_elements:
+					#check bounds
+					if (inBounds(row, col, tup, width, height)):
+						if image.getpixel((col + tup[1], row + tup[0]))[0] == 255:
+							isZero = True
+							finArr[row][col] = 1
+							break
+				if (not isZero):
+					finArr[row][col] = 0
+	return finArr
 
 def opening(image, structure_element):
 	pass
@@ -56,10 +74,10 @@ def flatten_structure_element(structure_element):
 
 
 image = read_image('test_erosion_2.bmp')
-structure_element = [[0, 0, 0], [1, 1, 1], [1, 1, 1]]
+structure_element = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
 # print flatten_structure_element(structure_element)
-finalArr = erosion(image, structure_element)
+finalArr = dilation(image, structure_element)
 # print finalArr
 numpyArr = (np.array(finalArr) * 255).astype(np.uint8)
 im = Image.fromarray(numpyArr)
-im.save('result_test.bmp')
+im.save('result_test_dilation.bmp')
