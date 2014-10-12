@@ -19,7 +19,7 @@ def erosion(image, structure_element):
 				for tup in flattened_elements:
 					#check bounds
 					if (inBounds(row, col, tup, width, height)):
-						if image.getpixel((col + tup[1], row + tup[0]))[0] == 255:
+						if image.getpixel((col + tup[1], row + tup[0]))[0] == 0:
 							isZero = True
 							finArr[row][col] = 0
 							break
