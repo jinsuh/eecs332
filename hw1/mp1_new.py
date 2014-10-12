@@ -1,5 +1,5 @@
 from PIL import Image
-# import numpy as np
+import numpy as np
 
 def connected_component_labeling(image_path):
 	image = Image.open(image_path)
@@ -8,7 +8,7 @@ def connected_component_labeling(image_path):
 
 	labels = []
 	label_count = 1
-	error_table = {}
+	equivalence_table = {}
 
 	for row in range(height):
 		labels.append([])
@@ -29,17 +29,15 @@ def connected_component_labeling(image_path):
 					label = min(up, left)
 					labels[row].append(label)
 					
-					if up in error_table:
-						error_table[left] = error_table[up]
-					elif left in error_table:
-						error_table[up] = error_table[left]
-					else:
-						error_table[max(up, left)] = label
+					if up in equivalence_table:
+						equivalence_table[left] = equivalence_table[up]
+					elif left in equivalence_table:
+						equivalence_table[up] = equivalence_table[left]
 				else:
 					labels[row].append(label_count)
-					error_table[label_count] = label_count
+					equivalence_table[label_count] = label_count
 					label_count = label_count + 1
-	return labels, error_table
+	return labels, equivalence_table
 
 def label_up(row, col, labels):
 	if row - 1 < 0:
@@ -53,46 +51,78 @@ def label_left(row, col, labels):
 	else:
 		return labels[row][col - 1]
 
-def correct_error_table(error_table, label, correct_label):
-	print 'correct', correct_label
-	print 'label', label
-	print 'error', error_table[label]
-	print 'type correct', type(error_table[label])
-	print 'type error', type(label)
-	print 'equal', (error_table[label] == label)
-	if error_table[label] == label:
-		error_table[label] = correct_label
-		return error_table
-	else:
-		return correct_error_table(error_table, error_table[label], correct_label)
-
-def correct_error_label(error_table, label):
-	if error_table[label] == label:
+def correct_equivalence_label(equivalence_table, label):
+	if equivalence_table[label] == label:
 		return label
 	else:
-		return correct_error_label(error_table, error_table[label])
+		return correct_equivalence_label(equivalence_table, equivalence_table[label])
 
-def correct_labels(labels, error_table):
-	label_count = 1
+def correct_labels(labels, equivalence_table):
+	label_count = 0
 	label_map = {}
 	for row in range(0, len(labels)):
 		for col in range(0, len(labels[row])):
 			if labels[row][col] > 0:
-				label = correct_error_label(error_table, labels[row][col])
+				label = correct_equivalence_label(equivalence_table, labels[row][col])
 
 				if not label in label_map:
-					label_map[label] = label_count
 					label_count = label_count + 1
+					label_map[label] = label_count
 
 				labels[row][col] = label_map[label]
-	return labels, label_count - 1
+	return labels, label_count
+
+def correct_labels_with_size_filter(labels, equivalence_table, threshold):
+	label_count = 0
+	label_map = {}
+	label_count_map = {}
+	for row in range(0, len(labels)):
+		for col in range(0, len(labels[row])):
+			if labels[row][col] > 0:
+				label = correct_equivalence_label(equivalence_table, labels[row][col])
+
+				if not label in label_map:
+					label_count = label_count + 1
+					label_map[label] = label_count
+					label_count_map[label_map[label]] = 1
+
+				label_count_map[label_map[label]] = label_count_map[label_map[label]] + 1
+				labels[row][col] = label_map[label]
+
+	num_components_map = {}
+	num_components = 0
+
+	for row in range(0, len(labels)):
+		for col in range(0, len(labels[row])):
+			if labels[row][col] != 0 and label_count_map[labels[row][col]] <= threshold:
+				labels[row][col] = 0
+			elif labels[row][col] != 0 and not labels[row][col] in num_components_map:
+				num_components_map[labels[row][col]] = True
+				num_components = num_components + 1
+
+	return labels, num_components
+
+def create_result_image(labels, name):
+	image_array = (np.array(labels) * 255 / 6).astype(np.uint8)
+	image = Image.fromarray(image_array)
+	image.save(name + '.bmp', 'bmp')
 
 def ccl(image_path):
-	labels, error_table = connected_component_labeling(image_path)
-	corrected_labels, label_count = correct_labels(labels, error_table)
+	labels, equivalence_table = connected_component_labeling(image_path)
+	corrected_labels, label_count = correct_labels(labels, equivalence_table)
 	return corrected_labels, label_count
 
-# labels, num = ccl('face.bmp')
-# image_array = (np.array(labels) * 255 / 6).astype(np.uint8)
-# image = Image.fromarray(image_array)
-# image.save('result.bmp', 'bmp')
+def ccl_size_filter(image_path, threshold):
+	labels, equivalence_table = connected_component_labeling(image_path)
+	corrected_labels, label_count = correct_labels_with_size_filter(labels, equivalence_table, threshold)
+	return corrected_labels, label_count
+
+labels, num = ccl('test.bmp')
+create_result_image(labels, 'result_test')
+print 'test.bmp' + ' ' + str(num)
+labels, num = ccl_size_filter('gun.bmp', 300)
+create_result_image(labels, 'result_gun')
+print 'gun.bmp' + ' ' + str(num)
+labels, num = ccl('face.bmp')
+create_result_image(labels, 'result_face')
+print 'face.bmp' + ' ' + str(num)
