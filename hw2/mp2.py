@@ -55,8 +55,8 @@ def flatten_structure_element(structure_element):
 	return flattened_structure_element
 
 
-image = read_image('test_erosion.bmp')
-structure_element = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+image = read_image('test_erosion_2.bmp')
+structure_element = [[0, 0, 0], [1, 1, 1], [1, 1, 1]]
 # print flatten_structure_element(structure_element)
 finalArr = erosion(image, structure_element)
 # print finalArr
