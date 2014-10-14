@@ -102,8 +102,8 @@ def boundary(image):
 	finArr = [[0 for x in xrange(width)] for x in xrange(height)]
 	for row in range(height):
 		for col in range(width):
-			if erodedImage[row][col] == 255 and image[row][col] == 0:
-				finArr[row][col] = 0
+			if erodedImage[row][col] == 255:
+				image[row][col] = 0
 			# finArr[row][col] = min(erodedImage[row][col], image[row][col])
 	# finArr = [[0 for x in xrange(width)] for x in xrange(height)]
 	# flattened_elements= flatten_structure_element(structure_element)
@@ -119,7 +119,7 @@ def boundary(image):
 	# 						isNotZero = True
 	# 						image[row + tup[0]][col + tup[1]] = 255
 	# 						break
-	return finArr
+	return image
 
 def flatten_structure_element(structure_element):
 	center = len(structure_element) / 2
