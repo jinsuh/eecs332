@@ -54,7 +54,7 @@ def dilation(image, structureElement):
 					if (inBounds(row, col, tup, width, height)):
 						if image[row + tup[0]][col + tup[1]] == 255:
 							isNotZero = True
-							finArr[row + tup[0]][col + tup[1]] = 255
+							finArr[row][col] = 255
 							break
 				if (not isNotZero):
 					finArr[row][col] = 0
@@ -98,9 +98,9 @@ def flattenStructureElement(structureElement):
 
 # TESTING
 
-image = readImage('gun.bmp')
-structureElement = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
-finalArr = opening(image, structureElement)
+image = readImage('palm.bmp')
+structureElement = [[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]
+finalArr = dilation(image, structureElement)
 numpyArr = (np.array(finalArr)).astype(np.uint8)
 im = Image.fromarray(numpyArr)
-im.save('resultOpeningGun3x3.bmp')
+im.save('resultDilationPalm5x5.bmp')
