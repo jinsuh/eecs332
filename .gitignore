@@ -1,2 +1,5 @@
 .DS_Store
 env
+*.pages
+hw1/greg*
+hw2/greg*
