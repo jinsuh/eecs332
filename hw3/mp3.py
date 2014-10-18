@@ -13,8 +13,8 @@ def histogram(imageData):
 	for row in range(height):
 		for col in range(width):
 			pixel = imageData.getpixel((col, row))
-			rgb_average = (pixel[0] + pixel[1] + pixel[2]) / 3
-			histogram[rgb_average] = histogram[rgb_average] + 1
+			rgbAverage = (pixel[0] + pixel[1] + pixel[2]) / 3
+			histogram[rgbAverage] = histogram[rgbAverage] + 1
 	return histogram
 
 def probabilityMassFunction(histogramData, size):
@@ -35,12 +35,12 @@ def cumulativeDistributiveFunction(histogramData):
 
 def histogramEqualization(imageData, histogramData):
 	width, height = imageData.size
-	image = [[0 for x in xrange(height)] for x in xrange(width)]
+	image = [[0 for x in xrange(width)] for x in xrange(height)]
 	for row in range(height):
 		for col in range(width):
 			pixel = imageData.getpixel((col, row))
-			rgb_average = (pixel[0] + pixel[1] + pixel[2]) / 3
-			image[col][row] = histogramData[rgb_average] * 256
+			rgbAverage = (pixel[0] + pixel[1] + pixel[2]) / 3
+			image[row][col] = histogramData[rgbAverage] * 256
 
 	return image
 
