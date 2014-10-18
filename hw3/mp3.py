@@ -15,3 +15,12 @@ def histogram(imageData):
 			pixel = imageData.get((col, row))
 			hist[pixel] = hist[pixel] + 1
 	return hist
+
+def probabilityMassFunction(histogram_data, size):
+	for i in range(len(histogram_data)):
+		value = histogram_data[i]
+		histogram_data[i] = value / size
+
+	return histogram_data
+
+
