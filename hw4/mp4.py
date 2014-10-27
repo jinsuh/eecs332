@@ -20,26 +20,38 @@ def get_HSV_histogram(image_data, width, height):
 				hsv_dict[(h,s)] += 1
 	return hsv_dict
 
-def normalize_histogram_area(hist):
+def normalize_histogram_sum(hist):
 	total = 0
 	for key in hist.keys():
 		total += hist[key]
+	total /= len(hist)
 	for key in hist.keys():
 		hist[key] /= total
 	return hist
 
-def print_histogram(hist):
+def normalize_histogram_area(hist):
+	y = [0 for x in range(len(hist))]
+	count = 0
+	for key in hist:
+		y[count] = hist[key]
+		count += 1
+	area = np.trapz(y)
+	for key in hist:
+		hist[key] = hist[key] / area
+	return hist
+
+def print_histogram(hist, name):
 	hist_array_y = [0 for x in range(len(hist.keys()))]
 	count = 0
 	for key in hist.keys():
 		hist_array_y[count] = hist[key]
 		count += 1
 	plt.bar(range(len(hist_array_y)), hist_array_y)
-	plt.title('HSV Histogram')
-	plt.savefig('HSV Histogram')
+	plt.title(name)
+	plt.savefig(name)
 	plt.clf()
 
-def color_segmentation(image, threshold):
+# def color_segmentation(image, threshold):
 	
 
 def create_result_image(image_array, name):
@@ -48,7 +60,9 @@ def create_result_image(image_array, name):
 	image.save(name + '.bmp', 'bmp')
 
 #test code
-image = read_image('gun.bmp')
+image = read_image('traing_images/sample_1.jpg')
 width, height = image.size
 hsv_dict = get_HSV_histogram(image, width, height)
-print_histogram(hsv_dict)
+# print_histogram(hsv_dict, 'orig hist')
+norm_hist = normalize_histogram_area(hsv_dict)
+print_histogram(norm_hist, 'norm area hist')
