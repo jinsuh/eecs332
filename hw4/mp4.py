@@ -28,24 +28,35 @@ def train(image_paths):
 
 	return hsv_dict
 
-def normalize_histogram_area(hist):
+def normalize_histogram_sum(hist):
 	total = 0
 	for key in hist.keys():
 		total += hist[key]
-	total /= len(hist.keys())
+	total /= len(hist)
 	for key in hist.keys():
 		hist[key] /= total
 	return hist
 
-def print_histogram(hist):
+def normalize_histogram_area(hist):
+	y = [0 for x in range(len(hist))]
+	count = 0
+	for key in hist:
+		y[count] = hist[key]
+		count += 1
+	area = np.trapz(y)
+	for key in hist:
+		hist[key] = hist[key] / area
+	return hist
+
+def print_histogram(hist, name):
 	hist_array_y = [0 for x in range(len(hist.keys()))]
 	count = 0
 	for key in hist.keys():
 		hist_array_y[count] = hist[key]
 		count += 1
 	plt.bar(range(len(hist_array_y)), hist_array_y)
-	plt.title('HSV Histogram')
-	plt.savefig('HSV Histogram')
+	plt.title(name)
+	plt.savefig(name)
 	plt.clf()
 
 def color_segmentation(image_data, threshold):
@@ -56,6 +67,7 @@ def color_segmentation(image_data, threshold):
 
 	hsv_dict = train(image_paths)
 	normalized_hsv_dict = normalize_histogram_area(hsv_dict)
+	print_histogram(normalized_hsv_dict, 'area_hist')
 
 	width, height = image_data.size
 	new_image = [[0 for x in xrange(width)] for x in xrange(height)]
@@ -70,7 +82,6 @@ def color_segmentation(image_data, threshold):
 				new_image[row][col] = (0,0,0)
 
 	return new_image
-
 
 def create_result_image(image_array, name):
 	array = (np.array(image_array)).astype(np.uint8)
