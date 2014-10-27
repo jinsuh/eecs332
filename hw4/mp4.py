@@ -20,6 +20,14 @@ def get_HSV_histogram(image_data, width, height):
 				hsv_dict[(h,s)] += 1
 	return hsv_dict
 
+def normalize_histogram_area(hist):
+	total = 0
+	for key in hist.keys():
+		total += hist[key]
+	for key in hist.keys():
+		hist[key] /= total
+	return hist
+
 def print_histogram(hist):
 	hist_array_y = [0 for x in range(len(hist.keys()))]
 	count = 0
@@ -30,6 +38,9 @@ def print_histogram(hist):
 	plt.title('HSV Histogram')
 	plt.savefig('HSV Histogram')
 	plt.clf()
+
+def color_segmentation(image, threshold):
+	
 
 def create_result_image(image_array, name):
 	array = (np.array(image_array)).astype(np.uint8)
