@@ -1,59 +1,58 @@
 from PIL import Image
 import numpy as np
 
-def readImage(imagePath):
+def read_image(imagePath):
 	image = Image.open(imagePath)
-	imageData = image.getdata()
+	image_data = image.getdata()
 
-	return imageData
+	return image_data
 
-def histogram(imageData):
-	width, height = imageData.size
+def histogram(image_data):
+	width, height = image_data.size
 	histogram = [0 for x in range(256)]
 	for row in range(height):
 		for col in range(width):
-			pixel = imageData.getpixel((col, row))
-			rgbAverage = (pixel[0] + pixel[1] + pixel[2]) / 3
-			histogram[rgbAverage] = histogram[rgbAverage] + 1
+			pixel = image_data.getpixel((col, row))
+			rgb_average = (pixel[0] + pixel[1] + pixel[2]) / 3
+			histogram[rgb_average] = histogram[rgb_average] + 1
 	return histogram
 
-def probabilityMassFunction(histogramData, size):
-	for i in range(len(histogramData)):
-		value = histogramData[i]
-		histogramData[i] = value / float(size)
+def probability_mass_function(histogram_data, size):
+	for i in range(len(histogram_data)):
+		value = histogram_data[i]
+		histogram_data[i] = value / float(size)
 
-	return histogramData
+	return histogram_data
 
-def cumulativeDistributiveFunction(histogramData):
-	for i in range(len(histogramData)):
-		value = histogramData[i]
+def cumulative_distributive_function(histogram_data):
+	for i in range(len(histogram_data)):
+		value = histogram_data[i]
 
 		if i > 0:
-			histogramData[i] = histogramData[i] + histogramData[i - 1]
+			histogram_data[i] = histogram_data[i] + histogram_data[i - 1]
 
-	return histogramData 
+	return histogram_data 
 
-def histogramEqualization(imageData, histogramData):
-	width, height = imageData.size
+def histogram_equalization(image_data):
+	width, height = image_data.size
+	histogram_data = histogram(image_data)
+	histogram_data = probability_mass_function(histogram_data, width * height)
+	histogram_data = cumulative_distributive_function(histogram_data)
 	image = [[0 for x in xrange(width)] for x in xrange(height)]
 	for row in range(height):
 		for col in range(width):
-			pixel = imageData.getpixel((col, row))
-			rgbAverage = (pixel[0] + pixel[1] + pixel[2]) / 3
-			image[row][col] = histogramData[rgbAverage] * 256
+			pixel = image_data.getpixel((col, row))
+			rgb_average = (pixel[0] + pixel[1] + pixel[2]) / 3
+			image[row][col] = histogram_data[rgb_average] * 256
 
 	return image
 
-def createResultImage(imageArray, name):
+def create_result_image(imageArray, name):
 	array = (np.array(imageArray)).astype(np.uint8)
 	image = Image.fromarray(array)
 	image.save(name + '.bmp', 'bmp')
 
 #test code
-image = readImage('moon.bmp')
-width, height = image.size
-histogramData = histogram(image)
-histogramData = probabilityMassFunction(histogramData, width * height)
-histogramData = cumulativeDistributiveFunction(histogramData)
-newImage = histogramEqualization(image, histogramData)
-createResultImage(newImage, 'moon_result')
+image = read_image('moon.bmp')
+new_image = histogram_equalization(image)
+create_result_image(new_image, 'moon_result2')
