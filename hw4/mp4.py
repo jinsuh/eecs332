@@ -39,6 +39,9 @@ def print_histogram(hist):
 	plt.savefig('HSV Histogram')
 	plt.clf()
 
+def color_segmentation(image, threshold):
+	
+
 def create_result_image(image_array, name):
 	array = (np.array(image_array)).astype(np.uint8)
 	image = Image.fromarray(array)
