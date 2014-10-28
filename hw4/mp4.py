@@ -2,6 +2,8 @@ from PIL import Image
 import numpy as np
 import colorsys
 import matplotlib.pyplot as plt
+import math
+import sys
 
 def read_image(image_path):
 	image = Image.open(image_path)
@@ -13,7 +15,7 @@ def get_HSV_histogram(image_data, hsv_dict):
 	for row in range(height):
 		for col in range(width):
 			r,g,b = image_data.getpixel((col, row))
-			h,s,v = colorsys.rgb_to_hsv(r/255., g/255., b/255.)
+			h,s,v = colorsys.rgb_to_hsv(math.floor(r/255.*10), math.floor(g/255.*10), math.floor(b/255.*10))
 			if not (h,s) in hsv_dict:
 				hsv_dict[(h,s)] = 1
 			else:
@@ -32,7 +34,7 @@ def normalize_histogram_sum(hist):
 	total = 0
 	for key in hist.keys():
 		total += hist[key]
-	total /= len(hist)
+	total = 1
 	for key in hist.keys():
 		hist[key] /= total
 	return hist
@@ -61,12 +63,12 @@ def print_histogram(hist, name):
 
 def color_segmentation(image_data, threshold):
 	image_paths = []
-	for i in range(1, 55):
-		image_path = 'training_images/sample_' + str(i) + '.jpg'
+	for i in range(1, 12):
+		image_path = 'training_images_2/sample_' + str(i) + '.jpg'
 		image_paths.append(image_path)
 
 	hsv_dict = train(image_paths)
-	normalized_hsv_dict = normalize_histogram_area(hsv_dict)
+	normalized_hsv_dict = normalize_histogram_sum(hsv_dict)
 	print_histogram(normalized_hsv_dict, 'area_hist')
 
 	width, height = image_data.size
@@ -75,7 +77,7 @@ def color_segmentation(image_data, threshold):
 	for row in range(height):
 		for col in range(width):
 			r,g,b = image_data.getpixel((col, row))
-			h,s,v = colorsys.rgb_to_hsv(r/255., g/255., b/255.)
+			h,s,v = colorsys.rgb_to_hsv(math.floor(r/255.*10), math.floor(g/255.*10), math.floor(b/255.*10))
 			if (h,s) in normalized_hsv_dict and normalized_hsv_dict[(h,s)] > threshold:
 				new_image[row][col] = (r,g,b)
 			else:
@@ -88,10 +90,13 @@ def create_result_image(image_array, name):
 	image = Image.fromarray(array)
 	image.save(name + '.bmp', 'bmp')
 
-#test code
-image = read_image('gun.bmp')
-width, height = image.size
-image_array = color_segmentation(image, 0)
-create_result_image(image_array, 'stuff')
-# print normalized_hsv_dict[normalized_hsv_dict.keys()[100]]
-# print_histogram(hsv_dict)
+def main():
+	image_path = sys.argv[1]
+	threshold = int(sys.argv[2])
+	image = read_image(image_path)
+	width, height = image.size
+	image_array = color_segmentation(image, threshold)
+	create_result_image(image_array, 'result_' + image_path.replace('.bmp', ''))
+
+if __name__ == "__main__":
+    main()
