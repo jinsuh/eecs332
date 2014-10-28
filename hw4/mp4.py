@@ -34,9 +34,8 @@ def normalize_histogram_sum(hist):
 	total = 0
 	for key in hist.keys():
 		total += hist[key]
-	total = 1
 	for key in hist.keys():
-		hist[key] /= total
+		hist[key] /= float(total)
 	return hist
 
 def normalize_histogram_area(hist):
@@ -92,7 +91,7 @@ def create_result_image(image_array, name):
 
 def main():
 	image_path = sys.argv[1]
-	threshold = int(sys.argv[2])
+	threshold = float(sys.argv[2])
 	image = read_image(image_path)
 	width, height = image.size
 	image_array = color_segmentation(image, threshold)
