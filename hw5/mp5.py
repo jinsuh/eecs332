@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.signal
+from scipy import ndimage
 from PIL import Image
 
 def gauss2D(shape=(3,3),sigma=0.5):
@@ -18,8 +19,6 @@ def gauss2D(shape=(3,3),sigma=0.5):
 
 def gaussian_smoothing(image_array, N, sigma):
     g_mask = gauss2D((N, N), sigma)
-    print g_mask
-    print image_array
     new_im_arr = scipy.signal.convolve2d(image_array, g_mask, mode = 'same')
     return new_im_arr
 
@@ -33,8 +32,18 @@ def build_image_array(image_path):
             image_array[row][col] = image_data.getpixel((col, row))[0]
     return image_array
 
+def gradient(image_array):
+    image_array = image_array.astype('int32')
+    dx = ndimage.sobel(image_array, 0)
+    dy = ndimage.sobel(image_array, 1) 
+    mag = np.hypot(dx, dy)
+    mag *= 255.0 / np.max(mag)
+    scipy.misc.imsave('sobel_result.jpg', mag)
+
 im_arr = build_image_array("lena.bmp")
 new_arr = gaussian_smoothing(im_arr, 3, 3)
-array = new_arr.astype(np.uint8)
-image = Image.fromarray(array)
-image.save('result.bmp', 'bmp')
+gradient(new_arr)
+
+# array = new_arr.astype(np.uint8)
+# image = Image.fromarray(array)
+# image.save('result.bmp', 'bmp')
