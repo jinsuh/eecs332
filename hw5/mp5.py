@@ -36,9 +36,12 @@ def gradient(image_array):
     image_array = image_array.astype('int32')
     dx = ndimage.sobel(image_array, 0)
     dy = ndimage.sobel(image_array, 1) 
+    theta = np.arctan2(dy.astype(float), dx.astype(float))
+    theta *= 255.0
     mag = np.hypot(dx, dy)
     mag *= 255.0 / np.max(mag)
-    scipy.misc.imsave('sobel_result.jpg', mag)
+    scipy.misc.imsave('sobel_result.jpg', theta)
+    return mag, theta
 
 im_arr = build_image_array("lena.bmp")
 new_arr = gaussian_smoothing(im_arr, 3, 3)
