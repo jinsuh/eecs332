@@ -1,5 +1,8 @@
 .DS_Store
 env
 *.pages
-hw1/greg*
-hw2/greg*
+greg*
+hw3/graphs
+hw3/*result*
+hw4/*result*
+
