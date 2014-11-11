@@ -35,24 +35,20 @@ def build_image_array(image_path):
     return image_array
 
 def gradient(image_array):
-    # image_array = image_array.astype('int32')
+    # image_array = image_array.astype(float)
     dx = ndimage.sobel(image_array, 0)
     dy = ndimage.sobel(image_array, 1) 
-    # print 'dx'
-    # print dx
-    # print 'dy'
-    # print dy
     theta = np.arctan2(dy.astype(float), dx.astype(float))
     theta *= 180 / math.pi
     for i in range(len(theta)):
         for j in range(len(theta[i])):
-            if theta[i][j] < 0:
+            if theta[i][j] > 0:
                 theta[i][j] += 360
+
+    print theta
+
     mag = np.hypot(dx, dy)
     mag *= 255.0 / np.max(mag)
-    # print 'mag'
-    # print mag
-    # print len(mag[0])
     scipy.misc.imsave('sobel_result.jpg', theta)
     return mag, theta
 
@@ -61,7 +57,7 @@ def non_maxima_surpression(mag, theta):
     lut = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0)]
     for i in range(len(mag)):
         for j in range(len(mag[i])):
-            index = int(round((theta[i][j]/45.0)))
+            index = int(round((theta[i][j]/45.0))) % 7 + 2
             # print index
             neighbor = lut[index]
             neighbor2 = tuple([x * -1 for x in neighbor])
@@ -87,7 +83,7 @@ def non_maxima_surpression(mag, theta):
 
             if (neighbor_grad > mag[i][j]) or (neighbor2_grad > mag[i][j]):
                 mag[i][j] = 0
-    scipy.misc.imsave('suppress_result.jpg', mag)
+    scipy.misc.imsave('suppress_result_or.jpg', mag)
     return mag
 
 def find_threshold(mag, per):
@@ -111,11 +107,6 @@ def find_threshold(mag, per):
     t_high = temp / (100.0) #bin size - 1
     t_low = t_high * .5
     return t_low, t_high
-    # max_val = max(d.values())
-    # for key in d:
-    #     d[key] /= max_val
-
-    # print d
 
 def printHistogram(hist, name):
     plt.bar(range(len(hist)), hist.values())
@@ -142,7 +133,7 @@ new_arr = gaussian_smoothing(im_arr, 3, 3)
 mag, theta = gradient(new_arr)
 # print np.array(mag).max()
 mag = non_maxima_surpression(mag, theta)
-t_low, t_high = find_threshold(mag, 0.94)
+t_low, t_high = find_threshold(mag, 0.91)
 create_thresh_image(mag, t_high)
 
 # array = new_arr.astype(np.uint8)
