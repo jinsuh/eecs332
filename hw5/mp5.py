@@ -137,27 +137,30 @@ def edge_linking(t_low_mag, t_high_mag, image):
             if t_high_mag[i][j] != 0 and image[i][j] == 0:
                 recursive_t_high(i, j, t_high_mag, t_low_mag, image)
 
-def recursive_t_high(x, y, t_high_mag, t_low_mag, image):
-    neighbors = get_neighbors(x, y, image)
+def recursive_t_high(row, col, t_high_mag, t_low_mag, image):
+    neighbors = get_neighbors(row, col, image)
     for neighbor in neighbors:
         if t_high_mag[neighbor[0]][neighbor[1]] == 0:
             image[neighbor[0]][neighbor[1]] = 1
         else:
             image[neighbor[0]][neighbor[1]] = 255
-        if end_point(neighbor[0], neighbor[1], x, y, t_high_mag):
+
+        if end_point(neighbor[0], neighbor[1], image, t_high_mag):
             recursive_t_low(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
+            return
         else:
             recursive_t_high(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
 
-def recursive_t_low(x, y, t_high_mag, t_low_mag, image):
-    neighbors = get_neighbors(x, y, image)
+def recursive_t_low(row, col, t_high_mag, t_low_mag, image):
+    neighbors = get_neighbors(row, col, image)
     for neighbor in neighbors:
         if t_low_mag[neighbor[0]][neighbor[1]] == 0:
             image[neighbor[0]][neighbor[1]] = 1
         else:
             image[neighbor[0]][neighbor[1]] = 255
-        if end_point(neighbor[0], neighbor[1], x, y, t_low_mag) or t_high_mag[neighbor[0]][neighbor[1]] != 0:
-            pass
+
+        if end_point(neighbor[0], neighbor[1], image, t_low_mag) or t_high_mag[neighbor[0]][neighbor[1]] != 0:
+            return
         else:
             recursive_t_low(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
 
@@ -174,35 +177,19 @@ def get_neighbors(row, col, image):
             neighbors.append((neighbor_row, neighbor_col))
     return neighbors
 
-def end_point(x, y, xprev, yprev, mag): #False -> endpoint
+def end_point(row, col, image, mag): #True -> endpoint
     width = len(mag[0])
     height = len(mag)
-    if (check_neighbor_bound(x - 1, y - 1, width, height)): #lower left
-        if (mag[x-1][y-1] != 0 and (xprev != x-1 or yprev != y-1)):
-            return (x-1, y-1)
-    if (check_neighbor_bound(x, y - 1, width, height)): #bottom
-        if (mag[x][y-1] != 0 and (xprev != x or yprev != y-1)):
-            return (x, y-1)
-    if (check_neighbor_bound(x + 1, y - 1, width, height)): #lower right
-        if (mag[x+1][y-1] != 0 and (xprev != x+1 or yprev != y-1)):
-            return (x+1, y-1)
-    if (check_neighbor_bound(x + 1, y, width, height)): #right
-        if (mag[x+1][y] != 0 and (xprev != x+1 or yprev != y)):
-            return (x+1, y)
-    if (check_neighbor_bound(x + 1, y + 1, width, height)): #upper right
-        if (mag[x+1][y+1] != 0 and (xprev != x+1 or yprev != y+1)):
-            return (x+1, y+1)
-    if (check_neighbor_bound(x, y + 1, width, height)): #top
-        if (mag[x][y+1] != 0 and (xprev != x or yprev != y+1)):
-            return (x, y+1)
-    if (check_neighbor_bound(x - 1, y + 1, width, height)): #upper left
-        if (mag[x-1][y+1] != 0 and (xprev != x-1 or yprev != y+1)):
-            return (x-1, y+1)
-    if (check_neighbor_bound(x - 1, y, width, height)): #left
-        if (mag[x-1][y] != 0 and (xprev != x-1 or yprev != y)):
-            return (x-1, y)
-    return False
 
+    neighbors = get_neighbors(row, col, image)
+    for neighbor in neighbors:
+        neighbor_row = neighbor[0]
+        neighbor_col = neighbor[1]
+
+        if mag[neighbor_row][neighbor_col] != 0:
+            return False
+
+    return True
 
 def check_neighbor_bound(x, y, width, height):
     return (x >= 0 and x < width) and (y >= 0 and y < height)
@@ -214,7 +201,7 @@ new_arr = gaussian_smoothing(im_arr, 3, 3)
 mag, theta = gradient(new_arr)
 # print np.array(mag).max()
 mag = non_maxima_surpression(mag, theta)
-t_low, t_high = find_threshold(mag, 0.94)
+t_low, t_high = find_threshold(mag, 0.95)
 t_low_mag = create_thresh_mag(mag, t_low)
 t_high_mag = create_thresh_mag(mag, t_high)
 image = new_image = [[0 for x in xrange(len(t_low_mag[0]))] for x in xrange(len(t_low_mag))]
