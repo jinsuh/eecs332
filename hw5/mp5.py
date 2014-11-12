@@ -4,6 +4,7 @@ from scipy import ndimage
 from PIL import Image
 import math
 import matplotlib.pyplot as plt
+import sys
 
 NEIGHBORS = [(0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1)]
 
@@ -205,7 +206,9 @@ def end_point(x, y, xprev, yprev, mag): #False -> endpoint
 
 
 def check_neighbor_bound(x, y, width, height):
-    return (x < 0) or (y < 0) or (x > width) or (y > height)
+    return (x >= 0 and x < width) or (y >= 0 and y < height)
+
+sys.setrecursionlimit(2000)
 
 im_arr = build_image_array("lena.bmp")
 new_arr = gaussian_smoothing(im_arr, 3, 3)
