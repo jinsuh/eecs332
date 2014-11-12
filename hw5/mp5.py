@@ -146,7 +146,6 @@ def recursive_t_high(x, y, t_high_mag, t_low_mag, image):
             image[neighbor[0]][neighbor[1]] = 255
         if end_point(neighbor[0], neighbor[1], x, y, t_high_mag):
             recursive_t_low(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
-            return
         else:
             recursive_t_high(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
 
@@ -157,8 +156,8 @@ def recursive_t_low(x, y, t_high_mag, t_low_mag, image):
             image[neighbor[0]][neighbor[1]] = 1
         else:
             image[neighbor[0]][neighbor[1]] = 255
-        if end_point(neighbor[0], neighbor[1], x, y, t_low_mag) or t_high_mag[neighbor[0]][neighbor[1]]:
-            return
+        if end_point(neighbor[0], neighbor[1], x, y, t_low_mag) or t_high_mag[neighbor[0]][neighbor[1]] != 0:
+            pass
         else:
             recursive_t_low(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
 
@@ -206,20 +205,20 @@ def end_point(x, y, xprev, yprev, mag): #False -> endpoint
 
 
 def check_neighbor_bound(x, y, width, height):
-    return (x >= 0 and x < width) or (y >= 0 and y < height)
+    return (x >= 0 and x < width) and (y >= 0 and y < height)
 
-sys.setrecursionlimit(2000)
+sys.setrecursionlimit(100000)
 
 im_arr = build_image_array("lena.bmp")
 new_arr = gaussian_smoothing(im_arr, 3, 3)
 mag, theta = gradient(new_arr)
 # print np.array(mag).max()
 mag = non_maxima_surpression(mag, theta)
-t_low, t_high = find_threshold(mag, 0.91)
+t_low, t_high = find_threshold(mag, 0.94)
 t_low_mag = create_thresh_mag(mag, t_low)
 t_high_mag = create_thresh_mag(mag, t_high)
 image = new_image = [[0 for x in xrange(len(t_low_mag[0]))] for x in xrange(len(t_low_mag))]
 edge_linking(t_low_mag, t_high_mag, image)
-# array = new_arr.astype(np.uint8)
-# image = Image.fromarray(array)
-# image.save('result.bmp', 'bmp')
+array = np.array(image).astype(np.uint8)
+image = Image.fromarray(array)
+image.save('result.bmp', 'bmp')
