@@ -140,9 +140,9 @@ def edge_linking(t_low_mag, t_high_mag, image):
 def recursive_t_high(row, col, t_high_mag, t_low_mag, image):
     neighbors = get_neighbors(row, col, image)
     for neighbor in neighbors:
-        if t_high_mag[neighbor[0]][neighbor[1]] == 0:
+        if t_high_mag[neighbor[0]][neighbor[1]] == 0 and image[neighbor[0]][neighbor[1]] == 0:
             image[neighbor[0]][neighbor[1]] = 1
-        else:
+        elif image[neighbor[0]][neighbor[1]] == 0:
             image[neighbor[0]][neighbor[1]] = 255
 
         if end_point(neighbor[0], neighbor[1], image, t_high_mag):
@@ -154,9 +154,9 @@ def recursive_t_high(row, col, t_high_mag, t_low_mag, image):
 def recursive_t_low(row, col, t_high_mag, t_low_mag, image):
     neighbors = get_neighbors(row, col, image)
     for neighbor in neighbors:
-        if t_low_mag[neighbor[0]][neighbor[1]] == 0:
+        if t_low_mag[neighbor[0]][neighbor[1]] == 0 and image[neighbor[0]][neighbor[1]] == 0:
             image[neighbor[0]][neighbor[1]] = 1
-        else:
+        elif image[neighbor[0]][neighbor[1]] == 0:
             image[neighbor[0]][neighbor[1]] = 255
 
         if end_point(neighbor[0], neighbor[1], image, t_low_mag) or t_high_mag[neighbor[0]][neighbor[1]] != 0:
