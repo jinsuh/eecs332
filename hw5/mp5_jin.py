@@ -8,23 +8,18 @@ import sys
 
 NEIGHBORS = [(0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1)]
 
-def gauss2D(shape=(3,3),sigma=0.5):
-    """
-    2D gaussian mask - should give the same result as MATLAB's
-    fspecial('gaussian',[shape],[sigma])
-    """
-    m,n = [(ss-1.)/2. for ss in shape]
-    y,x = np.ogrid[-m:m+1,-n:n+1]
-    h = np.exp( -(x*x + y*y) / (2.*sigma*sigma) )
-    h[ h < np.finfo(h.dtype).eps*h.max() ] = 0
-    sumh = h.sum()
-    if sumh != 0:
-        h /= sumh
-    return h
+def gauss2D(N = 3, sigma=0.5):
+    x, y = np.mgrid[-N//2 + 1:N//2 + 1, -N//2 + 1:N//2 + 1]
+    g = np.exp(-((x**2 + y**2)/(2.0*sigma**2)))
+    return g/g.sum()
 
 def gaussian_smoothing(image_array, N, sigma):
-    g_mask = gauss2D((N, N), sigma)
-    new_im_arr = scipy.signal.convolve2d(image_array, g_mask, mode = 'same')
+    g_mask = gauss2D(N, sigma)
+    new_im_arr = scipy.signal.convolve2d(image_array, g_mask, mode = 'same', boundary = 'symm')
+    # new_im_arr = ndimage.gaussian_filter(img, sigma=(sigma, sigma, 0), order=0)
+    array = np.array(new_im_arr).astype(np.uint8)
+    image = Image.fromarray(array)
+    image.save('result_smoothing.bmp', 'bmp')
     return new_im_arr
 
 def build_image_array(image_path):
@@ -39,8 +34,10 @@ def build_image_array(image_path):
 
 def gradient(image_array):
     # image_array = image_array.astype(float)
-    dx = ndimage.sobel(image_array, 0)
-    dy = ndimage.sobel(image_array, 1) 
+    dy = ndimage.sobel(image_array, 0)
+    dx = ndimage.sobel(image_array, 1)
+    # dy *= -1
+    dx *= -1
     theta = np.arctan2(dy.astype(float), dx.astype(float))
     theta *= 180 / math.pi
     for i in range(len(theta)):
@@ -51,17 +48,20 @@ def gradient(image_array):
     # print theta
 
     mag = np.hypot(dx, dy)
-    mag *= 255.0 / np.max(mag)
+    # mag *= 255.0 / np.max(mag)
     scipy.misc.imsave('sobel_result.jpg', theta)
+    scipy.misc.imsave('sobel_result_mag.jpg', mag)
     return mag, theta
 
 def non_maxima_surpression(mag, theta):
     #new (dx, dy)
+    print "min" + str(np.min(theta)), str(np.max(theta))
     lut = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0)]
     for i in range(len(mag)):
         for j in range(len(mag[i])):
             index = int(round((theta[i][j]/45.0))) % 7 + 2
             # print index
+            # print theta[i][j]
             neighbor = lut[index]
             neighbor2 = tuple([x * -1 for x in neighbor])
             # print 'engihbor', neighbor
@@ -70,21 +70,21 @@ def non_maxima_surpression(mag, theta):
             # print i,j
             # print len(mag)
             # print len(mag[i])
-            if ((j + neighbor[0]) < 0) or ((j + neighbor[0]) >= len(mag[i])) or ((i + neighbor[1]) < 0) or (i + neighbor[1] >= len(mag)) :
+            if ((i + neighbor[0]) < 0) or ((i + neighbor[0]) >= len(mag)) or ((j + neighbor[1]) < 0) or (j + neighbor[1] >= len(mag[i])) :
                 neighbor_grad = -999999999999
             else:
-                neighbor_grad = mag[i + neighbor[1]][j + neighbor[0]]
+                neighbor_grad = mag[i + neighbor[0]][j + neighbor[1]]
 
 
 
             # print j + neighbor2[0]
             # print i + neighbor2[1]
-            if ((j + neighbor2[0]) < 0) or ((j + neighbor2[0]) >= len(mag[i])) or ((i + neighbor2[1]) < 0) or (i + neighbor2[1] >= len(mag)):
+            if ((i + neighbor2[0]) < 0) or ((i + neighbor2[0]) >= len(mag)) or ((j + neighbor2[1]) < 0) or (j + neighbor2[1] >= len(mag[i])):
                 neighbor2_grad = -999999999999
             else:
-                neighbor2_grad = mag[i + neighbor2[1]][j + neighbor2[0]]
+                neighbor2_grad = mag[i + neighbor2[0]][j + neighbor2[1]]
 
-            if (neighbor_grad > mag[i][j]) or (neighbor2_grad > mag[i][j]):
+            if (neighbor_grad >= mag[i][j]) or (neighbor2_grad >= mag[i][j]):
                 mag[i][j] = 0
     scipy.misc.imsave('suppress_result_or.jpg', mag)
     return mag
@@ -135,6 +135,7 @@ def edge_linking(t_low_mag, t_high_mag, image):
     for i in range(len(t_high_mag)):
         for j in range(len(t_high_mag[i])):
             if t_high_mag[i][j] != 0 and image[i][j] == 0:
+                image[i][j] == 255
                 recursive_t_high(i, j, t_high_mag, t_low_mag, image)
 
 def recursive_t_high(row, col, t_high_mag, t_low_mag, image):
@@ -150,7 +151,7 @@ def recursive_t_high(row, col, t_high_mag, t_low_mag, image):
                 # print "recurse low"
                 recursive_t_low(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
             else:
-                # print "return"
+            #     # print "return"
                 return
         else:
             # print "recurse high"
@@ -193,6 +194,15 @@ def get_neighbors(row, col, image):
             neighbors.append((neighbor_row, neighbor_col))
     return neighbors
 
+def get_all_neighbors(row, col, image):
+    neighbors = []
+    for neighbor in NEIGHBORS:
+        neighbor_row = row + neighbor[0]
+        neighbor_col = col + neighbor[1]
+        if in_bounds(neighbor_row, neighbor_col, len(image[0]), len(image)):
+            neighbors.append((neighbor_row, neighbor_col))
+    return neighbors    
+
 def get_neighbors_exist(row, col, image):
     neighbors = []
     for neighbor in NEIGHBORS:
@@ -222,12 +232,12 @@ def check_neighbor_bound(x, y, width, height):
 
 sys.setrecursionlimit(100000)
 
-im_arr = build_image_array("lena.bmp")
-new_arr = gaussian_smoothing(im_arr, 3, 3)
+im_arr = build_image_array("gun.bmp")
+new_arr = gaussian_smoothing(im_arr, 5, 5)
 mag, theta = gradient(new_arr)
 # print np.array(mag).max()
 mag = non_maxima_surpression(mag, theta)
-t_low, t_high = find_threshold(mag, 0.9)
+t_low, t_high = find_threshold(mag, 0.93)
 t_low_mag = create_thresh_mag(mag, t_low)
 t_high_mag = create_thresh_mag(mag, t_high)
 
