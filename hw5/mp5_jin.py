@@ -100,7 +100,7 @@ def find_threshold(mag, per):
                 d[val] += 1
 
     cummulative_sum = 0
-    # printHistogram(d, 'hist')
+    printHistogram(d, 'hist')
     for key in d:
         cummulative_sum += d[key]
 
@@ -142,44 +142,50 @@ def recursive_t_high(row, col, t_high_mag, t_low_mag, image):
     neighbors = get_neighbors(row, col, image)
     for neighbor in neighbors:
         # print "row, col high: " + str(row), str(col)
-        if t_high_mag[neighbor[0]][neighbor[1]] != 0:
-            image[neighbor[0]][neighbor[1]] = 255
-        else:
-            image[neighbor[0]][neighbor[1]] = 1
-        if end_point(neighbor[0], neighbor[1], image, t_high_mag):
-            if t_low_mag[neighbor[0]][neighbor[1]] != 0:
-                # print "recurse low"
-                recursive_t_low(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
+        if image[neighbor[0]][neighbor[1]] == 0:
+            if t_high_mag[neighbor[0]][neighbor[1]] != 0:
+                image[neighbor[0]][neighbor[1]] = 255
+            else:   
+                image[neighbor[0]][neighbor[1]] = 1
+            if end_point(neighbor[0], neighbor[1], t_high_mag):
+                if t_low_mag[neighbor[0]][neighbor[1]] != 0:
+                    # print "recurse low"
+                    recursive_t_low(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
+                else:
+                #     # print "return"
+                    return
             else:
-            #     # print "return"
-                return
+                # print "recurse high"
+                recursive_t_high(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
         else:
-            # print "recurse high"
-            recursive_t_high(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
+            return
 
 def recursive_t_low(row, col, t_high_mag, t_low_mag, image):
     neighbors = get_neighbors(row, col, image)
     for neighbor in neighbors:
         # print "row, col: " + str(row), str(col)
-        if t_high_mag[neighbor[0]][neighbor[1]] != 0:
-            image[neighbor[0]][neighbor[1]] = 255
-        elif t_low_mag[neighbor[0]][neighbor[1]] != 0:
-            neighbor_check = get_neighbors_exist(neighbor[0], neighbor[1], image)
-            check = False
-            for neighbor_exist in neighbor_check:
-                if image[neighbor_exist[0]][neighbor_exist[1]] == 255:
-                    image[neighbor[0]][neighbor[1]] = 255
-                    check = True
-            if not check:
-                image[neighbor[0]][neighbor[1]] = 1    
-        else:
-            image[neighbor[0]][neighbor[1]] = 1
-        if end_point(neighbor[0], neighbor[1], image, t_low_mag) or t_high_mag[neighbor[0]][neighbor[1]] != 0:
-            # print "return"
-            return
-        else:
-            # print "again"
-            recursive_t_low(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
+        if image[neighbor[0]][neighbor[1]] == 0:
+            if t_high_mag[neighbor[0]][neighbor[1]] != 0:
+                image[neighbor[0]][neighbor[1]] = 255
+            elif t_low_mag[neighbor[0]][neighbor[1]] != 0:
+                neighbor_check = get_neighbors_exist(neighbor[0], neighbor[1], image)
+                check = False
+                for neighbor_exist in neighbor_check:
+                    if image[neighbor_exist[0]][neighbor_exist[1]] == 255:
+                        image[neighbor[0]][neighbor[1]] = 255
+                        check = True
+                if not check:
+                    image[neighbor[0]][neighbor[1]] = 1    
+            else:
+                image[neighbor[0]][neighbor[1]] = 1
+            if end_point(neighbor[0], neighbor[1], t_low_mag) or t_high_mag[neighbor[0]][neighbor[1]] != 0:
+                # print "return"
+                return
+            else:
+                # print "again"
+                recursive_t_low(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
+        # else:
+        #     return
 
 
 def in_bounds(row, col, width, height):
@@ -213,31 +219,35 @@ def get_neighbors_exist(row, col, image):
     return neighbors
 
 
-def end_point(row, col, image, mag): #True -> endpoint
+def end_point(row, col, mag): #True -> endpoint
     width = len(mag[0])
     height = len(mag)
 
-    neighbors = get_neighbors(row, col, image)
+    neighbors = get_all_neighbors(row, col, mag)
+    count = 0
     for neighbor in neighbors:
         neighbor_row = neighbor[0]
         neighbor_col = neighbor[1]
 
         if mag[neighbor_row][neighbor_col] != 0:
-            return False
-
-    return True
+            count += 1
+    if count == 1:
+        return True
+    else:
+        return False
+    # return True
 
 def check_neighbor_bound(x, y, width, height):
     return (x >= 0 and x < width) and (y >= 0 and y < height)
 
 sys.setrecursionlimit(100000)
 
-im_arr = build_image_array("gun.bmp")
-new_arr = gaussian_smoothing(im_arr, 5, 5)
+im_arr = build_image_array("lena.bmp")
+new_arr = gaussian_smoothing(im_arr, 3, 3)
 mag, theta = gradient(new_arr)
 # print np.array(mag).max()
 mag = non_maxima_surpression(mag, theta)
-t_low, t_high = find_threshold(mag, 0.93)
+t_low, t_high = find_threshold(mag, 0.95)
 t_low_mag = create_thresh_mag(mag, t_low)
 t_high_mag = create_thresh_mag(mag, t_high)
 
