@@ -108,109 +108,117 @@ def createThresholdMag(mag, thresh):
     image.save('thresh' + str(thresh) + '.bmp', 'bmp')
     return newImage
 
-def edgeLinking(tLowMag, tHighMag, image):
-    for i in range(len(tHighMag)):
-        for j in range(len(tHighMag[i])):
-            if tHighMag[i][j] != 0 and image[i][j] == 0:
+def edge_linking(t_low_mag, t_high_mag, image):
+    for i in range(len(t_high_mag)):
+        for j in range(len(t_high_mag[i])):
+            if t_high_mag[i][j] != 0 and image[i][j] == 0:
                 image[i][j] == 255
-                recursiveTHigh(i, j, tHighMag, tLowMag, image)
+                recursive_t_high(i, j, t_high_mag, t_low_mag, image)
 
-def recursiveTHigh(row, col, tHighMag, tLowMag, image):
-    neighbors = getNeighbors(row, col, image)
+def recursive_t_high(row, col, t_high_mag, t_low_mag, image):
+    neighbors = get_neighbors(row, col, image)
     for neighbor in neighbors:
         # print "row, col high: " + str(row), str(col)
-        if tHighMag[neighbor[0]][neighbor[1]] != 0:
-            image[neighbor[0]][neighbor[1]] = 255
-        else:
-            image[neighbor[0]][neighbor[1]] = 1
-        if endPoint(neighbor[0], neighbor[1], tHighMag):
-            if tLowMag[neighbor[0]][neighbor[1]] != 0:
-                # print "recurse low"
-                findTLow(neighbor[0], neighbor[1], tHighMag, tLowMag, image)
+        if image[neighbor[0]][neighbor[1]] == 0:
+            if t_high_mag[neighbor[0]][neighbor[1]] != 0:
+                image[neighbor[0]][neighbor[1]] = 255
             else:
-            #     # print "return"
-                return
-        else:
-            # print "recurse high"
-            recursiveTHigh(neighbor[0], neighbor[1], tHighMag, tLowMag, image)
+                image[neighbor[0]][neighbor[1]] = 1
+            if end_point(neighbor[0], neighbor[1], t_high_mag):
+                if t_low_mag[neighbor[0]][neighbor[1]] != 0:
+                    # print "recurse low"
+                    recursive_t_low(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
+                else:
+                #     # print "return"
+                    return
+            else:
+                # print "recurse high"
+                recursive_t_high(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
+        # else:
+        #     return
 
-def findTLow(row, col, tHighMag, tLowMag, image):
-    neighbors = getNeighbors(row, col, image)
+def recursive_t_low(row, col, t_high_mag, t_low_mag, image):
+    neighbors = get_neighbors(row, col, image)
     for neighbor in neighbors:
         # print "row, col: " + str(row), str(col)
-        if tHighMag[neighbor[0]][neighbor[1]] != 0:
+        if t_high_mag[neighbor[0]][neighbor[1]] != 0:
             image[neighbor[0]][neighbor[1]] = 255
-        elif tLowMag[neighbor[0]][neighbor[1]] != 0:
-            NeighborCheck = getNeighborsExists(neighbor[0], neighbor[1], image)
+            break
+        elif t_low_mag[neighbor[0]][neighbor[1]] != 0:
+            neighbor_check = get_neighbors_exist(neighbor[0], neighbor[1], image)
             check = False
-            for neighborExist in NeighborCheck:
-                if image[neighborExist[0]][neighborExist[1]] == 255:
+            for neighbor_exist in neighbor_check:
+                if image[neighbor_exist[0]][neighbor_exist[1]] == 255:
                     image[neighbor[0]][neighbor[1]] = 255
                     check = True
             if not check:
                 image[neighbor[0]][neighbor[1]] = 1    
         else:
             image[neighbor[0]][neighbor[1]] = 1
-        if endPoint(neighbor[0], neighbor[1], tLowMag) or tHighMag[neighbor[0]][neighbor[1]] != 0:
+        if end_point(neighbor[0], neighbor[1], t_low_mag) or t_high_mag[neighbor[0]][neighbor[1]] != 0:
             # print "return"
             return
         else:
             # print "again"
-            findTLow(neighbor[0], neighbor[1], tHighMag, tLowMag, image)
+            recursive_t_low(neighbor[0], neighbor[1], t_high_mag, t_low_mag, image)
 
 
-def inBounds(row, col, width, height):
+def in_bounds(row, col, width, height):
     return row >= 0 and row < height and col >= 0 and col < width
 
-def getNeighbors(row, col, image):
+def get_neighbors(row, col, image):
     neighbors = []
     for neighbor in NEIGHBORS:
-        neighborRow = row + neighbor[0]
-        neighborCol = col + neighbor[1]
-        if inBounds(neighborRow, neighborCol, len(image[0]), len(image)) and image[neighborRow][neighborCol] == 0:
-            neighbors.append((neighborRow, neighborCol))
+        neighbor_row = row + neighbor[0]
+        neighbor_col = col + neighbor[1]
+        if in_bounds(neighbor_row, neighbor_col, len(image[0]), len(image)) and image[neighbor_row][neighbor_col] == 0:
+            neighbors.append((neighbor_row, neighbor_col))
     return neighbors
 
-def getAllNeighbors(row, col, image):
+def get_all_neighbors(row, col, image):
     neighbors = []
     for neighbor in NEIGHBORS:
-        neighborRow = row + neighbor[0]
-        neighborCol = col + neighbor[1]
-        if inBounds(neighborRow, neighborCol, len(image[0]), len(image)):
-            neighbors.append((neighborRow, neighborCol))
+        neighbor_row = row + neighbor[0]
+        neighbor_col = col + neighbor[1]
+        if in_bounds(neighbor_row, neighbor_col, len(image[0]), len(image)):
+            neighbors.append((neighbor_row, neighbor_col))
     return neighbors    
 
-def getNeighborsExists(row, col, image):
+def get_neighbors_exist(row, col, image):
     neighbors = []
     for neighbor in NEIGHBORS:
-        neighborRow = row + neighbor[0]
-        neighborCol = col + neighbor[1]
-        if inBounds(neighborRow, neighborCol, len(image[0]), len(image)) and image[neighborRow][neighborCol] != 0:
-            neighbors.append((neighborRow, neighborCol))
+        neighbor_row = row + neighbor[0]
+        neighbor_col = col + neighbor[1]
+        if in_bounds(neighbor_row, neighbor_col, len(image[0]), len(image)) and image[neighbor_row][neighbor_col] != 0:
+            neighbors.append((neighbor_row, neighbor_col))
     return neighbors
 
 
-def endPoint(row, col, mag):
+def end_point(row, col, mag): #True -> endpoint
     width = len(mag[0])
     height = len(mag)
 
-    neighbors = getAllNeighbors(row, col, mag)
+    neighbors = get_all_neighbors(row, col, mag)
     count = 0
     for neighbor in neighbors:
-        neighborRow = neighbor[0]
-        neighborCol = neighbor[1]
+        neighbor_row = neighbor[0]
+        neighbor_col = neighbor[1]
 
-        if mag[neighborRow][neighborCol] != 0:
-            count += 1
-    if count == 1:
-        return True
-    else:
-        return False
+        if mag[neighbor_row][neighbor_col] != 0 and neighbor_row != row and neighbor_col != col:
+            return False
+    # if count == 1:
+    #     return True
+    # else:
+    #     return False
+    return True
+
+def check_neighbor_bound(x, y, width, height):
+    return (x >= 0 and x < width) and (y >= 0 and y < height)
 
 sys.setrecursionlimit(100000)
 
-imageArray = buildImageArray("lena.bmp")
-newArray = gaussianSmoothing(imageArray, 3, 3)
+imageArray = buildImageArray("test.bmp")
+newArray = gaussianSmoothing(imageArray, 1, 1)
 mag, theta = gradient(newArray)
 mag = nonMaximaSuppression(mag, theta)
 tLow, tHigh = findThreshold(mag, 0.9)
@@ -218,7 +226,7 @@ tLowMag = createThresholdMag(mag, tLow)
 tHighMag = createThresholdMag(mag, tHigh)
 
 image = newImage = [[0 for x in xrange(len(tLowMag[0]))] for x in xrange(len(tLowMag))]
-edgeLinking(tLowMag, tHighMag, image)
+edge_linking(tLowMag, tHighMag, image)
 array = np.array(image).astype(np.uint8)
 image = Image.fromarray(array)
 image.save('result_test.bmp', 'bmp')
