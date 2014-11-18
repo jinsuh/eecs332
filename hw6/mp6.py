@@ -224,10 +224,16 @@ def hough_transform(image):
     for row in range(height):
         for col in range(width):
             if image[row][col] == 255:
+                thetas = []
+                rs = []
+
                 for t in range(0, 180):
                     theta = t * math.pi / 180
-                    r = math.cos(theta) * col + math.cos(theta) * row
+                    r = int(math.cos(theta) * col + math.cos(theta) * row)
                     key = (r, t)
+
+                    thetas.append(t)
+                    rs.append(r)
 
                     if key in H:
                         H[key] += 1
@@ -236,22 +242,39 @@ def hough_transform(image):
 
                     if H[key] > max_value:
                         max_value = H[key]
-    
-    max_keys = []
-    thetas = []
-    rs = []
-    for key in H:
-        thetas.append(key[1])
-        rs.append(key[0])
-        if H[key] == max_value:
-            max_keys.append(key)
 
-    print_histogram(H, 'hough_transform_hist')
+                plt.plot(rs, thetas)
+    
+
+
+    # max_keys = []
+    # # thetas = []
+    # # rs = []
+    # for key in H:
+    #     thetas.append(key[1])
+    #     rs.append(key[0])
+    #     if H[key] == max_value:
+    #         max_keys.append(key)
+
+    # for key in H:
+    #     max_keys = []
+    #     thetas = []
+    #     rs = []
+
+    #     for i in range(0, 180):
+    #         thetas.append(i)
+    #         theta = i * math.pi / 180
+    #         rs.append(int(math.cos(theta) * col + math.cos(theta) * row))
+
+    #     plt.plot(rs, thetas)
+
+    plt.show()
+
+    # print_histogram(H, 'hough_transform_hist')
     print max_value
     print max_keys
+
     
-    plt.plot(rs, theta)
-    plt.show()
 
 
 sys.setrecursionlimit(100000)
