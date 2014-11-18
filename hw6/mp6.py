@@ -77,7 +77,7 @@ def findThreshold(mag, per):
                 d[val] += 1
 
     cummulativeSum = 0
-    printHistogram(d, 'hist')
+    print_histogram(d, 'hist')
     for key in d:
         cummulativeSum += d[key]
 
@@ -88,13 +88,13 @@ def findThreshold(mag, per):
     tLow = tHigh * .5
     return tLow, tHigh
 
-def printHistogram(hist, name):
+def print_histogram(hist, name):
     plt.bar(range(len(hist)), hist.values())
     plt.title(name)
     plt.savefig(name)
     plt.clf()
 
-def createThresholdMag(mag, thresh):
+def create_threshold_mag(mag, thresh):
     newImage = [[0 for x in xrange(len(mag[0]))] for x in xrange(len(mag))]
     for i in range(len(mag)):
         for j in range(len(mag[i])):
@@ -215,6 +215,45 @@ def end_point(row, col, mag): #True -> endpoint
 def check_neighbor_bound(x, y, width, height):
     return (x >= 0 and x < width) and (y >= 0 and y < height)
 
+def hough_transform(image):
+    width = len(image[0])
+    height = len(image)
+    H = {}
+    max_value = 0
+
+    for row in range(height):
+        for col in range(width):
+            if image[row][col] == 255:
+                for t in range(0, 180):
+                    theta = t * math.pi / 180
+                    r = math.cos(theta) * col + math.cos(theta) * row
+                    key = (r, t)
+
+                    if key in H:
+                        H[key] += 1
+                    else:
+                        H[key] = 1
+
+                    if H[key] > max_value:
+                        max_value = H[key]
+    
+    max_keys = []
+    thetas = []
+    rs = []
+    for key in H:
+        thetas.append(key[1])
+        rs.append(key[0])
+        if H[key] == max_value:
+            max_keys.append(key)
+
+    print_histogram(H, 'hough_transform_hist')
+    print max_value
+    print max_keys
+    
+    plt.plot(rs, theta)
+    plt.show()
+
+
 sys.setrecursionlimit(100000)
 
 imageArray = buildImageArray("test.bmp")
@@ -222,11 +261,12 @@ newArray = gaussianSmoothing(imageArray, 1, 1)
 mag, theta = gradient(newArray)
 mag = nonMaximaSuppression(mag, theta)
 tLow, tHigh = findThreshold(mag, 0.9)
-tLowMag = createThresholdMag(mag, tLow)
-tHighMag = createThresholdMag(mag, tHigh)
+tLowMag = create_threshold_mag(mag, tLow)
+tHighMag = create_threshold_mag(mag, tHigh)
 
 image = newImage = [[0 for x in xrange(len(tLowMag[0]))] for x in xrange(len(tLowMag))]
 edge_linking(tLowMag, tHighMag, image)
-array = np.array(image).astype(np.uint8)
-image = Image.fromarray(array)
-image.save('result_test.bmp', 'bmp')
+hough_transform(image)
+# array = np.array(image).astype(np.uint8)
+# image = Image.fromarray(array)
+# image.save('result_test.bmp', 'bmp')
