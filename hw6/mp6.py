@@ -291,7 +291,7 @@ def hough_transform(image):
 
     for row in range(len(matrix)):
         for col in range(len(matrix[0])):
-            if matrix[row][col] > 0.46 * max_H:
+            if matrix[row][col] > 0.9 * max_H:
                 neighbors = get_all_neighbors(row, col, matrix)
 
                 check = True
@@ -308,14 +308,11 @@ def hough_transform(image):
             else:
                 matrix[row][col] = 0
 
-    # for row in range(len(matrix)):
-    #     for col in range(len(matrix[0])):
-
     for row in range(len(matrix)):
         for col in range(len(matrix[row])):
             if matrix[row][col] != 0:
                 print row, col
-                draw_line(image, col, row)
+                draw_line(image, col - abs(min_key_value), row - 90)
 
 
     array = np.array(image).astype(np.uint8)
@@ -352,11 +349,12 @@ def hough_transform(image):
 def draw_line(image, r, theta):
     width = len(image[0])
     height = len(image)
-    for x in range(width):
-        angle = theta * math.pi / 180.0
-        y = int((r - (x * math.cos(angle))) / math.sin(angle))
-        if y < height and y >= 0:
-            image[y][x] = 255
+    theta = theta * math.pi / 180
+
+    for row in range(height):
+        for col in range(height):
+            if r == int(col * math.cos(theta) + row * math.sin(theta)):
+                image[row][col] = 255
 
 def probability_mass_function(histogram_data, size):
     for i in range(len(histogram_data)):
@@ -406,11 +404,11 @@ def read_image(imagePath):
 
 sys.setrecursionlimit(100000)
 
-imageArray = buildImageArray("test.bmp")
+imageArray = buildImageArray("input.bmp")
 newArray = gaussianSmoothing(imageArray, 1, 1)
 mag, theta = gradient(newArray)
 mag = nonMaximaSuppression(mag, theta)
-tLow, tHigh = findThreshold(mag, 0.9)
+tLow, tHigh = findThreshold(mag, 0.95)
 tLowMag = create_threshold_mag(mag, tLow)
 tHighMag = create_threshold_mag(mag, tHigh)
 
