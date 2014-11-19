@@ -224,6 +224,7 @@ def hough_transform(image):
 
     for row in range(height):
         for col in range(width):
+            # print row, col
             if image[row][col] == 255:
                 thetas = []
                 rs = []
@@ -241,11 +242,18 @@ def hough_transform(image):
                     else:
                         H[key] = 1
 
+                    # for neigh in NEIGHBORS:
+                    #     new_key = (r + neigh[0], t + neigh[1])
+                    #     if new_key in H:
+                    #         H[new_key] += 1
+                    #     else:
+                    #         H[new_key] = 1
+
                     if H[key] > max_value:
                         max_value = H[key]
                         max_key = key
 
-                plt.plot(rs, thetas, color='#000000', alpha=0.01)
+                # plt.plot(rs, thetas, color='#000000', alpha=0.01)
     
     min_key_value = float('inf')
     max_key_value = 0
@@ -261,7 +269,7 @@ def hough_transform(image):
 
     r_range = abs(min_key_value) + max_key_value + 1
 
-    matrix = [[0 for x in xrange(r_range)] for x in xrange(180)]
+    matrix = [[0 for x in xrange(r_range)] for x in xrange(182)]
 
     max_H = np.max(H.values())
     print max_H
@@ -269,11 +277,21 @@ def hough_transform(image):
     print max_key
 
     for key in H:
-        matrix[key[1] + 90][key[0] + abs(min_key_value)] = H[key] / float(max_value) * 255
+        matrix[key[1] + 90][key[0] + abs(min_key_value)] = H[key]
+
+    array = np.array(matrix).astype(np.uint8)
+    image = Image.fromarray(array)
+    image.save('param_result.bmp', 'bmp')
+
+    image = read_image('param_result.bmp')
+    new_image = histogram_equalization(image)
+    array = np.array(new_image).astype(np.uint8)
+    image = Image.fromarray(array)
+    image.save('param_result_hist_equalized.bmp', 'bmp')
 
     for row in range(len(matrix)):
         for col in range(len(matrix[0])):
-            if matrix[row][col] > 0.7 * 255:
+            if matrix[row][col] > 0.46 * max_H:
                 neighbors = get_all_neighbors(row, col, matrix)
 
                 check = True
@@ -282,7 +300,7 @@ def hough_transform(image):
                     neighbor_row = neighbor[0]
                     neighbor_col = neighbor[1]
 
-                    if matrix[row][col] < matrix[neighbor_row][neighbor_col]:
+                    if matrix[row][col] <= matrix[neighbor_row][neighbor_col]:
                         check = False
 
                 if not check:
@@ -296,7 +314,7 @@ def hough_transform(image):
 
     array = np.array(matrix).astype(np.uint8)
     image = Image.fromarray(array)
-    image.save('param_result.bmp', 'bmp')
+    image.save('thresholded.bmp', 'bmp')
 
     # max_keys = []
     # # thetas = []
@@ -325,12 +343,55 @@ def hough_transform(image):
     # print max_value
     # print max_keys
 
+def probability_mass_function(histogram_data, size):
+    for i in range(len(histogram_data)):
+        value = histogram_data[i]
+        histogram_data[i] = value / float(size)
+
+    return histogram_data
+
+def cumulative_distributive_function(histogram_data):
+    for i in range(len(histogram_data)):
+        value = histogram_data[i]
+
+        if i > 0:
+            histogram_data[i] = histogram_data[i] + histogram_data[i - 1]
+
+    return histogram_data 
+
+def histogram_equalization(image_data):
+    width, height = image_data.size
+    histogram_data = histogram(image_data)
+    histogram_data = probability_mass_function(histogram_data, width * height)
+    histogram_data = cumulative_distributive_function(histogram_data)
+    image = [[0 for x in xrange(width)] for x in xrange(height)]
+    for row in range(height):
+        for col in range(width):
+            pixel = image_data.getpixel((col, row))
+            image[row][col] = histogram_data[pixel] * 256
+
+    return image
+
+def histogram(image_data):
+    width, height = image_data.size
+    histogram = [0 for x in range(256)]
+    for row in range(height):
+        for col in range(width):
+            pixel = image_data.getpixel((col, row))
+            histogram[pixel] = histogram[pixel] + 1
+    return histogram
+
+def read_image(imagePath):
+    image = Image.open(imagePath)
+    image_data = image.getdata()
+
+    return image_data
     
 
 
 sys.setrecursionlimit(100000)
 
-imageArray = buildImageArray("test.bmp")
+imageArray = buildImageArray("test2.bmp")
 newArray = gaussianSmoothing(imageArray, 1, 1)
 mag, theta = gradient(newArray)
 mag = nonMaximaSuppression(mag, theta)
