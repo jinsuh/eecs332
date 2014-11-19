@@ -220,6 +220,7 @@ def hough_transform(image):
     height = len(image)
     H = {}
     max_value = 0
+    max_key = None
 
     for row in range(height):
         for col in range(width):
@@ -227,9 +228,9 @@ def hough_transform(image):
                 thetas = []
                 rs = []
 
-                for t in range(0, 180):
+                for t in range(-90, 90):
                     theta = t * math.pi / 180
-                    r = int(math.cos(theta) * col + math.cos(theta) * row)
+                    r = int(math.cos(theta) * col + math.sin(theta) * row)
                     key = (r, t)
 
                     thetas.append(t)
@@ -242,9 +243,37 @@ def hough_transform(image):
 
                     if H[key] > max_value:
                         max_value = H[key]
+                        max_key = key
 
-                plt.plot(rs, thetas)
+                plt.plot(rs, thetas, color='#000000', alpha=0.01)
     
+    min_key_value = float('inf')
+    max_key_value = 0
+
+    for key in H:
+        if key[0] < min_key_value:
+            min_key_value = key[0]
+        if key[0] > max_key_value:
+            max_key_value = key[0]
+    
+    print min_key_value
+    print max_key_value
+
+    r_range = abs(min_key_value) + max_key_value + 1
+
+    matrix = [[0 for x in xrange(r_range)] for x in xrange(180)]
+
+    max_H = np.max(H.values())
+    print max_H
+    print max_value
+    print max_key
+
+    for key in H:
+        matrix[key[1] + 90][key[0] + abs(min_key_value)] = H[key] / float(max_value) * 255
+
+    array = np.array(matrix).astype(np.uint8)
+    image = Image.fromarray(array)
+    image.save('param_result.bmp', 'bmp')
 
 
     # max_keys = []
@@ -270,9 +299,9 @@ def hough_transform(image):
 
     plt.show()
 
-    # print_histogram(H, 'hough_transform_hist')
-    print max_value
-    print max_keys
+    print_histogram(H, 'hough_transform_hist')
+    # print max_value
+    # print max_keys
 
     
 
