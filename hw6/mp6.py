@@ -279,15 +279,15 @@ def hough_transform(image):
     for key in H:
         matrix[key[1] + 90][key[0] + abs(min_key_value)] = H[key]
 
-    array = np.array(matrix).astype(np.uint8)
-    image = Image.fromarray(array)
-    image.save('param_result.bmp', 'bmp')
+    # array = np.array(matrix).astype(np.uint8)
+    # image = Image.fromarray(array)
+    # image.save('param_result.bmp', 'bmp')
 
-    image = read_image('param_result.bmp')
-    new_image = histogram_equalization(image)
-    array = np.array(new_image).astype(np.uint8)
-    image = Image.fromarray(array)
-    image.save('param_result_hist_equalized.bmp', 'bmp')
+    # image = read_image('param_result.bmp')
+    # new_image = histogram_equalization(image)
+    # array = np.array(new_image).astype(np.uint8)
+    # image = Image.fromarray(array)
+    # image.save('param_result_hist_equalized.bmp', 'bmp')
 
     for row in range(len(matrix)):
         for col in range(len(matrix[0])):
@@ -311,8 +311,14 @@ def hough_transform(image):
     # for row in range(len(matrix)):
     #     for col in range(len(matrix[0])):
 
+    for row in range(len(matrix)):
+        for col in range(len(matrix[row])):
+            if matrix[row][col] != 0:
+                print row, col
+                draw_line(image, col, row)
 
-    array = np.array(matrix).astype(np.uint8)
+
+    array = np.array(image).astype(np.uint8)
     image = Image.fromarray(array)
     image.save('thresholded.bmp', 'bmp')
 
@@ -342,6 +348,15 @@ def hough_transform(image):
     # print_histogram(H, 'hough_transform_hist')
     # print max_value
     # print max_keys
+
+def draw_line(image, r, theta):
+    width = len(image[0])
+    height = len(image)
+    for x in range(width):
+        angle = theta * math.pi / 180.0
+        y = int((r - (x * math.cos(angle))) / math.sin(angle))
+        if y < height and y >= 0:
+            image[y][x] = 255
 
 def probability_mass_function(histogram_data, size):
     for i in range(len(histogram_data)):
@@ -391,7 +406,7 @@ def read_image(imagePath):
 
 sys.setrecursionlimit(100000)
 
-imageArray = buildImageArray("test2.bmp")
+imageArray = buildImageArray("test.bmp")
 newArray = gaussianSmoothing(imageArray, 1, 1)
 mag, theta = gradient(newArray)
 mag = nonMaximaSuppression(mag, theta)
