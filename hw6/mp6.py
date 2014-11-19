@@ -255,7 +255,7 @@ def hough_transform(image):
             min_key_value = key[0]
         if key[0] > max_key_value:
             max_key_value = key[0]
-    
+
     print min_key_value
     print max_key_value
 
@@ -271,10 +271,32 @@ def hough_transform(image):
     for key in H:
         matrix[key[1] + 90][key[0] + abs(min_key_value)] = H[key] / float(max_value) * 255
 
+    for row in range(len(matrix)):
+        for col in range(len(matrix[0])):
+            if matrix[row][col] > 0.7 * 255:
+                neighbors = get_all_neighbors(row, col, matrix)
+
+                check = True
+
+                for neighbor in neighbors:
+                    neighbor_row = neighbor[0]
+                    neighbor_col = neighbor[1]
+
+                    if matrix[row][col] < matrix[neighbor_row][neighbor_col]:
+                        check = False
+
+                if not check:
+                    matrix[row][col] = 0
+            else:
+                matrix[row][col] = 0
+
+    # for row in range(len(matrix)):
+    #     for col in range(len(matrix[0])):
+
+
     array = np.array(matrix).astype(np.uint8)
     image = Image.fromarray(array)
     image.save('param_result.bmp', 'bmp')
-
 
     # max_keys = []
     # # thetas = []
@@ -297,9 +319,9 @@ def hough_transform(image):
 
     #     plt.plot(rs, thetas)
 
-    plt.show()
+    # plt.show()
 
-    print_histogram(H, 'hough_transform_hist')
+    # print_histogram(H, 'hough_transform_hist')
     # print max_value
     # print max_keys
 
