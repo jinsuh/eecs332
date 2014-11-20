@@ -357,7 +357,7 @@ def draw_line(image, r, theta):
     theta = theta * math.pi / 180
 
     for row in range(height):
-        for col in range(height):
+        for col in range(width):
             if r == int(col * math.cos(theta) + row * math.sin(theta)):
                 image[row][col] = 255
 
@@ -424,9 +424,9 @@ sys.setrecursionlimit(100000)
 # image = Image.fromarray(array)
 # image.save('edge_result.bmp', 'bmp')
 img = cv2.imread('input.bmp',0)
-edges = cv2.Canny(img,80,100)
+edges = cv2.Canny(img,50,200)
 
-hough_transform(edges, 1, 0.5)
+hough_transform(edges, 1, 0.7)
 # draw_line(edges, 136, 59)
 array = np.array(edges).astype(np.uint8)
 image = Image.fromarray(array)
