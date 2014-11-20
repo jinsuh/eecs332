@@ -5,6 +5,7 @@ from PIL import Image
 import math
 import matplotlib.pyplot as plt
 import sys
+import cv2
 
 NEIGHBORS = [(0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1)]
 
@@ -294,7 +295,7 @@ def hough_transform(image, quant, threshold):
     for row in range(len(matrix)):
         for col in range(len(matrix[row])):
             if matrix[row][col] != 0:
-                print row, col
+                print col - abs(min_key_value), row * quant - 90
                 draw_line(image, col - abs(min_key_value), row * quant - 90)
 
 
@@ -409,21 +410,24 @@ def read_image(imagePath):
 sys.setrecursionlimit(100000)
 
 # Canny Edge Detector
-imageArray = buildImageArray("input.bmp")
-newArray = gaussianSmoothing(imageArray, 3, 3)
-mag, theta = gradient(newArray)
-mag = nonMaximaSuppression(mag, theta)
-tLow, tHigh = findThreshold(mag, 0.96)
-tLowMag = create_threshold_mag(mag, tLow)
-tHighMag = create_threshold_mag(mag, tHigh)
+# imageArray = buildImageArray("input.bmp")
+# newArray = gaussianSmoothing(imageArray, 3, 3)
+# mag, theta = gradient(newArray)
+# mag = nonMaximaSuppression(mag, theta)
+# tLow, tHigh = findThreshold(mag, 0.96)
+# tLowMag = create_threshold_mag(mag, tLow)
+# tHighMag = create_threshold_mag(mag, tHigh)
 
-image = newImage = [[0 for x in xrange(len(tLowMag[0]))] for x in xrange(len(tLowMag))]
-image = edge_linking(tLowMag, tHighMag, image)
+# image = newImage = [[0 for x in xrange(len(tLowMag[0]))] for x in xrange(len(tLowMag))]
+# image = edge_linking(tLowMag, tHighMag, image)
 # array = np.array(image).astype(np.uint8)
 # image = Image.fromarray(array)
 # image.save('edge_result.bmp', 'bmp')
+img = cv2.imread('input.bmp',0)
+edges = cv2.Canny(img,80,100)
 
-hough_transform(image, 1, 0.6)
-# array = np.array(image).astype(np.uint8)
-# image = Image.fromarray(array)
-# image.save('result_test.bmp', 'bmp')
+hough_transform(edges, 1, 0.5)
+# draw_line(edges, 136, 59)
+array = np.array(edges).astype(np.uint8)
+image = Image.fromarray(array)
+image.save('result_test.bmp', 'bmp')
