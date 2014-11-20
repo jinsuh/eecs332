@@ -114,6 +114,7 @@ def edge_linking(t_low_mag, t_high_mag, image):
             if t_high_mag[i][j] != 0 and image[i][j] == 0:
                 image[i][j] == 255
                 recursive_t_high(i, j, t_high_mag, t_low_mag, image)
+    return image
 
 def recursive_t_high(row, col, t_high_mag, t_low_mag, image):
     neighbors = get_neighbors(row, col, image)
@@ -215,12 +216,10 @@ def end_point(row, col, mag): #True -> endpoint
 def check_neighbor_bound(x, y, width, height):
     return (x >= 0 and x < width) and (y >= 0 and y < height)
 
-def hough_transform(image):
+def generate_accumulator(image, quant):
     width = len(image[0])
     height = len(image)
     H = {}
-    max_value = 0
-    max_key = None
 
     for row in range(height):
         for col in range(width):
@@ -229,7 +228,7 @@ def hough_transform(image):
                 thetas = []
                 rs = []
 
-                for t in range(-90, 90):
+                for t in np.arange(-90, 90, quant):
                     theta = t * math.pi / 180
                     r = int(math.cos(theta) * col + math.sin(theta) * row)
                     key = (r, t)
@@ -241,24 +240,13 @@ def hough_transform(image):
                         H[key] += 1
                     else:
                         H[key] = 1
+    return H
 
-                    # for neigh in NEIGHBORS:
-                    #     new_key = (r + neigh[0], t + neigh[1])
-                    #     if new_key in H:
-                    #         H[new_key] += 1
-                    #     else:
-                    #         H[new_key] = 1
-
-                    if H[key] > max_value:
-                        max_value = H[key]
-                        max_key = key
-
-                # plt.plot(rs, thetas, color='#000000', alpha=0.01)
-    
+def param_space(hist, quant):
     min_key_value = float('inf')
     max_key_value = 0
 
-    for key in H:
+    for key in hist:
         if key[0] < min_key_value:
             min_key_value = key[0]
         if key[0] > max_key_value:
@@ -269,29 +257,18 @@ def hough_transform(image):
 
     r_range = abs(min_key_value) + max_key_value + 1
 
-    matrix = [[0 for x in xrange(r_range)] for x in xrange(182)]
+    matrix = [[0 for x in xrange(r_range)] for x in xrange(int(181 / quant))]
 
-    max_H = np.max(H.values())
-    print max_H
-    print max_value
-    print max_key
+    max_H = np.max(hist.values())
 
-    for key in H:
-        matrix[key[1] + 90][key[0] + abs(min_key_value)] = H[key]
+    for key in hist:
+        matrix[int((key[1] + 90) / quant)][key[0] + abs(min_key_value)] = hist[key]
+    return matrix, max_H, min_key_value
 
-    # array = np.array(matrix).astype(np.uint8)
-    # image = Image.fromarray(array)
-    # image.save('param_result.bmp', 'bmp')
-
-    # image = read_image('param_result.bmp')
-    # new_image = histogram_equalization(image)
-    # array = np.array(new_image).astype(np.uint8)
-    # image = Image.fromarray(array)
-    # image.save('param_result_hist_equalized.bmp', 'bmp')
-
+def significant_intersection(matrix, threshold, max_hist):
     for row in range(len(matrix)):
         for col in range(len(matrix[0])):
-            if matrix[row][col] > 0.9 * max_H:
+            if matrix[row][col] > threshold * max_hist:
                 neighbors = get_all_neighbors(row, col, matrix)
 
                 check = True
@@ -307,17 +284,44 @@ def hough_transform(image):
                     matrix[row][col] = 0
             else:
                 matrix[row][col] = 0
+    return matrix
+
+def hough_transform(image, quant, threshold):
+    H = generate_accumulator(image, quant)
+    matrix, max_hist, min_key_value = param_space(H, quant)
+    matrix = significant_intersection(matrix, threshold, max_hist)
 
     for row in range(len(matrix)):
         for col in range(len(matrix[row])):
             if matrix[row][col] != 0:
                 print row, col
-                draw_line(image, col - abs(min_key_value), row - 90)
+                draw_line(image, col - abs(min_key_value), row * quant - 90)
 
 
     array = np.array(image).astype(np.uint8)
     image = Image.fromarray(array)
     image.save('thresholded.bmp', 'bmp')
+
+                    # for neigh in NEIGHBORS:
+                    #     new_key = (r + neigh[0], t + neigh[1])
+                    #     if new_key in H:
+                    #         H[new_key] += 1
+                    #     else:
+                    #         H[new_key] = 1
+
+                # plt.plot(rs, thetas, color='#000000', alpha=0.01)
+    
+    
+
+    # array = np.array(matrix).astype(np.uint8)
+    # image = Image.fromarray(array)
+    # image.save('param_result.bmp', 'bmp')
+
+    # image = read_image('param_result.bmp')
+    # new_image = histogram_equalization(image)
+    # array = np.array(new_image).astype(np.uint8)
+    # image = Image.fromarray(array)
+    # image.save('param_result_hist_equalized.bmp', 'bmp')
 
     # max_keys = []
     # # thetas = []
@@ -404,17 +408,22 @@ def read_image(imagePath):
 
 sys.setrecursionlimit(100000)
 
+# Canny Edge Detector
 imageArray = buildImageArray("input.bmp")
-newArray = gaussianSmoothing(imageArray, 1, 1)
+newArray = gaussianSmoothing(imageArray, 3, 3)
 mag, theta = gradient(newArray)
 mag = nonMaximaSuppression(mag, theta)
-tLow, tHigh = findThreshold(mag, 0.95)
+tLow, tHigh = findThreshold(mag, 0.96)
 tLowMag = create_threshold_mag(mag, tLow)
 tHighMag = create_threshold_mag(mag, tHigh)
 
 image = newImage = [[0 for x in xrange(len(tLowMag[0]))] for x in xrange(len(tLowMag))]
-edge_linking(tLowMag, tHighMag, image)
-hough_transform(image)
+image = edge_linking(tLowMag, tHighMag, image)
+# array = np.array(image).astype(np.uint8)
+# image = Image.fromarray(array)
+# image.save('edge_result.bmp', 'bmp')
+
+hough_transform(image, 1, 0.6)
 # array = np.array(image).astype(np.uint8)
 # image = Image.fromarray(array)
 # image.save('result_test.bmp', 'bmp')
