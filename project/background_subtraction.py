@@ -79,56 +79,76 @@ def generate_binary_image(image_array, threshold):
 
 	return binary_image_array
 
-def main():
-	images_paths_numbers = [i * 10 for i in range(2, 20)]
+def binary_centroid(image_array):
+	height = len(image_array)
+	width = len(image_array[0])
 
-	histogram = {}
+	row_sum = 0
+	col_sum = 0
 
-	print "reading images..."
-
-	# read in images and generate average histogram
-	for number in images_paths_numbers:
-		image_data = read_image_data('test_frames/frame_' + str(number) + '.bmp')
-		width, height = image_data.size
-		histogram = generate_average_histogram(image_data, histogram)
-
-	print "building average image..."
-
-	# build average image using histogram frequencies
-	average_image_array = [[0 for col in range(width)] for row in range(height)]
+	non_zero_sum = 0
 
 	for row in range(height):
 		for col in range(width):
-			key = (row, col)
+			if image_array[row][col] != 0:
+				row_sum += row
+				col_sum += col
+				non_zero_sum += 1
 
-			max_pixel_frequency = 0
-			max_pixel_value = 0
+	centroid_row = int(row_sum / non_zero_sum)
+	centroid_col = int(col_sum / non_zero_sum)
 
-			for pixel in histogram[key]:
-				frequency = histogram[key][pixel]
+	return centroid_row, centroid_col
 
-				if frequency > max_pixel_frequency:
-					max_pixel_frequency = frequency
-					max_pixel_value = pixel
+def main():
+	images_paths_numbers = [1, 31, 100, 150, 200] + [i * 10 for i in range(2, 20)]
 
-			average_image_array[row][col] = max_pixel_value
+	histogram = {}
+	average_image_array = None
 
-	print "saving average image..."
+	# read in images and generate average histogram
+	for i in range(len(images_paths_numbers)):
+		number = images_paths_numbers[i]
+		image_data = read_image_data('test_frames/frame_' + str(number) + '.bmp')
+		width, height = image_data.size
 
-	scipy.misc.imsave('average image.jpg', average_image_array)
+		if not average_image_array:
+			average_image_array = [[0 for col in range(width)] for row in range(height)]
 
-	print "reading in frame..."
+		histogram = generate_average_histogram(image_data, histogram)
+		
+		# build average image using histogram frequencies
+		print "building average image..."
+		for row in range(height):
+			for col in range(width):
+				key = (row, col)
 
-	for number in images_paths_numbers:
-		print 'frame ' + str(number)
-		frame_image_data = read_image_data('test_frames/frame_' + str(number) + '.bmp')
-		frame_image_array = generate_image_array(frame_image_data)
-		frame_difference_image_array = generate_difference_image(frame_image_array, average_image_array)
-		frame_difference_binary_image_array = generate_binary_image(frame_difference_image_array, 200)
-		scipy.misc.imsave('result_frames/binary_difference_image_' + str(number) + '.jpg', frame_difference_binary_image_array)
-		structure_element = [[1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]]
-		frame_closed_image_array = opening(frame_difference_binary_image_array, structure_element)
-		scipy.misc.imsave('result_frames/closed_difference_image_' + str(number) + '.jpg', frame_closed_image_array)
+				max_pixel_frequency = 0
+				max_pixel_value = 0
+
+				for pixel in histogram[key]:
+					frequency = histogram[key][pixel]
+
+					if frequency > max_pixel_frequency:
+						max_pixel_frequency = frequency
+						max_pixel_value = pixel
+
+				average_image_array[row][col] = max_pixel_value
+
+		scipy.misc.imsave('result_frames/average_image_' + str(number) + '.jpg', average_image_array)
+
+		if i > 4:
+			# frame_image_data = read_image_data('test_frames/frame_' + str(number) + '.bmp')
+			frame_image_array = generate_image_array(image_data)
+			frame_difference_image_array = generate_difference_image(frame_image_array, average_image_array)
+			frame_difference_binary_image_array = generate_binary_image(frame_difference_image_array, 200)
+			scipy.misc.imsave('result_frames/binary_difference_image_' + str(number) + '.jpg', frame_difference_binary_image_array)
+			structure_element = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+			frame_closed_image_array = opening(frame_difference_binary_image_array, structure_element)
+			centroid_row, centroid_col = binary_centroid(frame_closed_image_array)
+			frame_closed_image_array = draw_line(frame_closed_image_array, centroid_col, 0)
+			frame_closed_image_array[centroid_row][centroid_col] = 128
+			scipy.misc.imsave('result_frames/closed_difference_image_' + str(number) + '.jpg', frame_closed_image_array)
 
 if __name__ == "__main__":
 	main()

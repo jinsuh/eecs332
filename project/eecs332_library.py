@@ -89,3 +89,15 @@ def flatten_structure_element(structure_element):
 				flattened_structure_element.append((row - center, col - center))
 
 	return flattened_structure_element
+
+def draw_line(image, r, theta):
+	width = len(image[0])
+	height = len(image)
+	theta = theta * np.pi / 180
+
+	for row in range(height):
+		for col in range(width):
+			if r == int(col * np.cos(theta) + row * np.sin(theta)):
+				image[row][col] = 128
+
+	return image
