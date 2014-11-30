@@ -98,6 +98,36 @@ def draw_line(image, r, theta):
 	for row in range(height):
 		for col in range(width):
 			if r == int(col * np.cos(theta) + row * np.sin(theta)):
-				image[row][col] = 128
+				image[row][col] = (128, 128, 128)
 
 	return image
+
+def read_image_data(image_path):
+	image = Image.open(image_path)
+	image_data = image.getdata()
+	return image
+
+def generate_gray_scale_image_array(image_data):
+	width, height = image_data.size
+
+	image_array = [[0 for col in range(width)] for row in range(height)]
+
+	for row in range(height):
+		for col in range(width):
+			pixel = image_data.getpixel((col, row))
+			pixel = int((pixel[0] + pixel[1] + pixel[2]) / 3)
+			image_array[row][col] = pixel
+
+	return image_array
+
+def generate_rgb_image_array(image_data):
+	width, height = image_data.size
+
+	image_array = [[0 for col in range(width)] for row in range(height)]
+
+	for row in range(height):
+		for col in range(width):
+			pixel = image_data.getpixel((col, row))
+			image_array[row][col] = pixel
+
+	return image_array
