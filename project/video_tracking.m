@@ -2,6 +2,10 @@ function main(frames, nFrames)
 	H = zeros(1);
 	[height, width] = size(frames(:, :, 1, 1));
 
+	imwrite(frames(13:75, 13:75, :, 1), 'test.bmp');
+	text_synth('test.bmp', 50, 240, 320);
+	synthesizedTexture = imread('res_block.jpg');
+
 	% generate average
 	for i=1:(int32(nFrames)/10 - 1)
 		fprintf('frame %d\n', i * 10);
@@ -48,7 +52,17 @@ function main(frames, nFrames)
 		[row, col] = centroid(binary_image);
 		
 		frame = frames(:, :, :, i);
-		frame = drawLine(frame, col, 0);
+		% frame = drawLine(frame, col, 0, synthesizedTexture);
+
+		for r = 60:130
+			for c = col:width - 30
+				% if frame(r, c, 1) > 120 && frame(r, c, 2) < 120 && frame(r, c, 3) < 120
+				frame(r, c, 1) = 0;
+				frame(r, c, 2) = 0;
+				frame(r, c, 3) = 255;
+				% end
+			end
+		end
 
 		% fileName = sprintf('frame_%d.bmp',i);
 		% imwrite(frame, fileName);
@@ -57,7 +71,7 @@ function main(frames, nFrames)
 	close(vid);
 end
 
-function image = drawLine(image, r, theta)
+function image = drawLine(image, r, theta, synthesizedTexture)
 	[height, width] = size(image);
 
 	for row = 1:height
